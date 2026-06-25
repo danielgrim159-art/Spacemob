@@ -1,0 +1,3350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#030712">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spacemob">
+<link rel="manifest" href="manifest.json">
+<title>Spacemob — Space Coins Casino</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#030712;--surface:#0b0f1a;--surface2:#111827;--surface3:#1a2332;
+    --accent:#8b5cf6;--accent2:#38bdf8;--accent-glow:rgba(139,92,246,0.35);
+    --cyan:#38bdf8;--magenta:#c084fc;--green:#34d399;--red:#f87171;--gold:#fbbf24;
+    --text:#f1f5f9;--muted:#94a3b8;--border:rgba(148,163,184,0.12);
+    --radius:14px;--radius-sm:10px;--container:1180px;
+  }
+  body{
+    background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%,rgba(88,28,135,0.22),transparent),
+      radial-gradient(ellipse 60% 40% at 100% 50%,rgba(30,58,138,0.15),transparent),
+      radial-gradient(ellipse 50% 30% at 0% 80%,rgba(139,92,246,0.1),transparent);
+  }
+  canvas#bg{position:fixed;inset:0;z-index:0;opacity:0.55;pointer-events:none;}
+  /* ── SITE WRAPPER: side chat + main content ── */
+  .site-wrap {
+    display: flex;
+    min-height: calc(100vh - 64px);
+    position: relative;
+    z-index: 5;
+    margin-left: 260px;
+    transition: margin-left 0.25s ease;
+  }
+  .site-wrap.chat-collapsed {
+    margin-left: 48px;
+  }
+
+  /* ── CHAT SIDEBAR ── */
+  .chat-sidebar {
+    width: 260px;
+    background: rgba(11,15,26,0.97);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 64px;
+    bottom: 72px;
+    overflow: hidden;
+    transition: width 0.25s ease;
+    z-index: 90;
+  }
+  .chat-sidebar.collapsed { width: 48px; }
+  .chat-sidebar.collapsed .chat-body,
+  .chat-sidebar.collapsed .chat-input-wrap,
+  .chat-sidebar.collapsed .chat-header-title,
+  .chat-sidebar.collapsed .chat-online,
+  .chat-sidebar.collapsed .chat-username-bar { display: none; }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(15,22,40,0.95);
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .chat-header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    white-space: nowrap;
+  }
+  .chat-online {
+    font-size: 0.65rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .chat-online span {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 4px;
+    box-shadow: 0 0 6px var(--green);
+    vertical-align: middle;
+  }
+  .chat-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .chat-toggle-btn:hover { color: var(--text); }
+
+  .chat-username-bar {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .chat-username-label { font-size: 0.65rem; color: var(--muted); white-space: nowrap; }
+  .chat-username-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(139,92,246,0.4);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-family: 'Orbitron', sans-serif;
+    outline: none;
+    padding: 0.1rem 0.2rem;
+    min-width: 0;
+  }
+  .chat-username-input::placeholder { color: var(--muted); font-family:'Inter',sans-serif; }
+
+  .chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    scroll-behavior: smooth;
+  }
+  .chat-body::-webkit-scrollbar { width: 3px; }
+  .chat-body::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.15); border-radius: 4px; }
+
+  .chat-msg { display: flex; flex-direction: column; gap: 0.1rem; animation: chatIn 0.2s ease; }
+  @keyframes chatIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+  .chat-msg-header { display: flex; align-items: baseline; gap: 0.35rem; }
+  .chat-msg-user {
+    font-size: 0.68rem; font-weight: 600; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; max-width: 110px;
+  }
+  .chat-msg-user.is-you  { color: var(--accent); }
+  .chat-msg-user.bot1    { color: #f472b6; }
+  .chat-msg-user.bot2    { color: var(--gold); }
+  .chat-msg-user.bot3    { color: var(--green); }
+  .chat-msg-user.bot4    { color: #fb923c; }
+  .chat-msg-user.default { color: var(--accent2); }
+  .chat-msg-time { font-size: 0.58rem; color: var(--muted); flex-shrink: 0; }
+  .chat-msg-text { font-size: 0.74rem; color: rgba(241,245,249,0.82); line-height: 1.45; word-break: break-word; }
+  .chat-msg.is-system .chat-msg-text { color: var(--muted); font-style: italic; font-size: 0.68rem; }
+  .chat-msg.is-win  .chat-msg-text { color: var(--green); font-weight: 600; }
+  .chat-msg.is-lose .chat-msg-text { color: var(--red); }
+
+  .chat-input-wrap {
+    padding: 0.6rem 0.75rem;
+    border-top: 1px solid var(--border);
+    background: rgba(15,22,40,0.95);
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .chat-input {
+    flex: 1; min-width: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.42rem 0.6rem;
+    color: var(--text);
+    font-size: 0.76rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .chat-input:focus { border-color: rgba(139,92,246,0.5); }
+  .chat-input::placeholder { color: var(--muted); }
+  .chat-send-btn {
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    border: none; border-radius: 8px;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #fff; font-size: 0.82rem; flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .chat-send-btn:hover { opacity: 0.85; }
+
+  /* Main content takes remaining space */
+  .site-content { flex: 1; min-width: 0; padding: 1.75rem 1.5rem 3rem; }
+
+  @media (max-width: 900px) {
+    .site-wrap { margin-left: 220px; }
+    .chat-sidebar { width: 220px; }
+  }
+  @media (max-width: 700px) {
+    .chat-sidebar { display: none; }
+    .site-wrap { margin-left: 0; }
+    .site-content { padding: 1rem 0.75rem 5rem; }
+  }
+
+  .site-header{
+    position:sticky;top:0;z-index:100;
+    border-bottom:1px solid var(--border);
+    background:rgba(3,7,18,0.85);backdrop-filter:blur(16px);
+  }
+  .header-inner{
+    max-width:var(--container);margin:0 auto;padding:0.85rem 1.5rem;
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  }
+  .logo{display:flex;align-items:center;gap:0.75rem;}
+  .logo-icon{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),#6366f1);
+    display:flex;align-items:center;justify-content:center;font-size:1.35rem;
+    box-shadow:0 0 24px var(--accent-glow);
+  }
+  .logo-text{display:flex;flex-direction:column;line-height:1.15;}
+  .logo-brand{font-family:'Orbitron',sans-serif;font-size:1.15rem;font-weight:800;letter-spacing:1px;color:var(--text);}
+  .logo-sub{font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--accent2);}
+  .header-right{display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;}
+  .wallet{
+    background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:0.5rem 1rem;font-size:0.85rem;font-weight:500;color:var(--muted);
+  }
+  .wallet strong{color:var(--text);font-weight:600;}
+  .wallet-val{color:var(--green);font-family:'Orbitron',sans-serif;font-size:0.95rem;}
+  .fair-badge{
+    background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);color:var(--green);
+    padding:0.45rem 0.85rem;border-radius:var(--radius-sm);font-size:0.72rem;cursor:pointer;
+    font-family:'Orbitron',sans-serif;letter-spacing:0.5px;text-transform:uppercase;font-weight:600;
+  }
+  .fair-badge:hover{background:rgba(52,211,153,0.14);}
+  .site-main{position:relative;z-index:5;padding:0;}
+  .container{max-width:var(--container);margin:0 auto;}
+  .screen{display:none;}.screen.active{display:block;}
+  .lobby-hero{margin-bottom:2.5rem;}
+  .lobby-hero h1{font-family:'Orbitron',sans-serif;font-size:clamp(1.5rem,4vw,2rem);font-weight:800;}
+
+  .game-section{margin-bottom:2.25rem;}
+  .section-title{
+    font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:3px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:1rem;padding-left:0.25rem;
+    display:flex;align-items:center;gap:0.75rem;
+  }
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;}
+  /* ── DUEL-STYLE GAME CARDS ── */
+  .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1.1rem;}
+  .game-card{
+    border-radius:18px;overflow:hidden;cursor:pointer;
+    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.22s;
+    position:relative;border:none;
+    box-shadow:0 4px 24px rgba(0,0,0,0.45);
+  }
+  .game-card:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 16px 48px rgba(0,0,0,0.6);}
+  .game-card-img{
+    height:130px;display:flex;align-items:center;justify-content:center;
+    font-size:3.2rem;position:relative;overflow:hidden;
+  }
+  .game-card-img::after{
+    content:'100% RTP';position:absolute;top:10px;left:10px;
+    background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);
+    color:#fff;font-family:'Orbitron',sans-serif;font-size:0.58rem;
+    font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:20px;
+  }
+  .game-card-info{padding:0.9rem 1rem 1.1rem;background:rgba(0,0,0,0.25);}
+  .game-card-name{font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.5px;margin-bottom:0.2rem;color:#fff;}
+  .game-card-sub{font-size:0.7rem;color:rgba(255,255,255,0.65);line-height:1.4;}
+
+  /* Per-game colors */
+  .gc-purple .game-card-img{background:linear-gradient(160deg,#5b21b6,#7c3aed,#a855f7);}
+  .gc-gold   .game-card-img{background:linear-gradient(160deg,#92400e,#d97706,#fbbf24);}
+  .gc-teal   .game-card-img{background:linear-gradient(160deg,#0f766e,#0d9488,#2dd4bf);}
+  .gc-pink   .game-card-img{background:linear-gradient(160deg,#9d174d,#db2777,#f472b6);}
+  .gc-blue   .game-card-img{background:linear-gradient(160deg,#1e3a8a,#2563eb,#60a5fa);}
+  .gc-red    .game-card-img{background:linear-gradient(160deg,#7f1d1d,#dc2626,#f87171);}
+  .gc-green  .game-card-img{background:linear-gradient(160deg,#064e3b,#059669,#34d399);}
+  .gc-orange .game-card-img{background:linear-gradient(160deg,#7c2d12,#ea580c,#fb923c);}
+  .gc-indigo .game-card-img{background:linear-gradient(160deg,#312e81,#4f46e5,#818cf8);}
+  .gc-cyan   .game-card-img{background:linear-gradient(160deg,#164e63,#0891b2,#38bdf8);}
+
+  .gc-purple{background:linear-gradient(180deg,#3b1a6b,#1e0f3a);}
+  .gc-gold  {background:linear-gradient(180deg,#5c2e00,#2d1600);}
+  .gc-teal  {background:linear-gradient(180deg,#0a3730,#041e1b);}
+  .gc-pink  {background:linear-gradient(180deg,#5a0f2e,#2d0717);}
+  .gc-blue  {background:linear-gradient(180deg,#0f2060,#060e30);}
+  .gc-red   {background:linear-gradient(180deg,#450a0a,#200505);}
+  .gc-green {background:linear-gradient(180deg,#022c1d,#01140d);}
+  .gc-orange{background:linear-gradient(180deg,#431407,#1e0803);}
+  .gc-indigo{background:linear-gradient(180deg,#1e1b6b,#0d0b33);}
+  .gc-cyan  {background:linear-gradient(180deg,#082030,#030e18);}
+  .game-page-head{margin-bottom:1.25rem;}
+  .back-btn{
+    background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+    padding:0.4rem 0.85rem;border-radius:8px;cursor:pointer;font-size:0.8rem;margin-bottom:0.75rem;
+    font-family:'Inter',sans-serif;transition:all 0.15s;
+  }
+  .back-btn:hover{border-color:var(--accent);color:var(--accent2);}
+  .game-title-bar{
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;
+    padding:1rem 1.25rem;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);border-left:3px solid var(--game-accent,var(--accent));
+  }
+  .game-title{font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:1px;}
+  .game-tag{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .game-layout{display:grid;grid-template-columns:1fr 300px;gap:1.25rem;margin-top:1.25rem;align-items:start;}
+  @media(max-width:860px){.game-layout{grid-template-columns:1fr;}.game-layout .panel-sidebar{position:static!important;}}
+  .panel{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;
+  }
+  .panel-sidebar{position:sticky;top:5rem;}
+  .panel-title{
+    font-family:'Orbitron',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-bottom:0.85rem;
+  }
+  .panel-divider{height:1px;background:var(--border);margin:1rem 0;}
+  .ctrl-row{margin-bottom:0.85rem;}
+  .ctrl-row:last-of-type{margin-bottom:0;}
+  .ctrl-label{font-size:0.75rem;color:var(--muted);margin-bottom:0.35rem;display:flex;justify-content:space-between;}
+  .ctrl-label span{color:var(--accent2);font-weight:500;}
+  input[type=range]{width:100%;accent-color:var(--accent);}
+  input[type=number],input[type=text],select{
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);
+    padding:0.55rem 0.75rem;font-size:0.85rem;width:100%;outline:none;font-family:'Inter',sans-serif;
+  }
+  input:focus,select:focus{border-color:var(--accent);}
+  .btn{
+    width:100%;padding:0.75rem;border:none;border-radius:var(--radius-sm);
+    font-family:'Orbitron',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;cursor:pointer;transition:opacity 0.15s,transform 0.15s;margin-top:0.5rem;
+  }
+  .btn:hover:not(:disabled){opacity:0.92;transform:translateY(-1px);}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;}
+  .btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text);}
+  .btn-danger{background:linear-gradient(135deg,var(--red),#dc2626);color:#fff;}
+  .btn-green{background:linear-gradient(135deg,var(--green),#059669);color:#fff;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+  .msg{text-align:center;padding:0.75rem;border-radius:var(--radius-sm);font-weight:500;margin:0.75rem 0;font-size:0.88rem;min-height:2.4rem;display:flex;align-items:center;justify-content:center;}
+  .msg-win{background:rgba(52,211,153,0.1);color:var(--green);border:1px solid rgba(52,211,153,0.25);}
+  .msg-lose{background:rgba(248,113,113,0.1);color:var(--red);border:1px solid rgba(248,113,113,0.25);}
+  .msg-info{background:rgba(56,189,248,0.08);color:var(--cyan);border:1px solid rgba(56,189,248,0.2);}
+  .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.65rem;margin-bottom:1.25rem;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.65rem;text-align:center;}
+  .stat-val{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent2);}
+  .stat-lbl{font-size:0.65rem;color:var(--muted);margin-top:0.15rem;text-transform:uppercase;letter-spacing:0.5px;}
+  .war-arena{display:flex;align-items:center;justify-content:center;gap:2rem;padding:2rem 1rem;min-height:220px;}
+  .war-card-slot{display:flex;flex-direction:column;align-items:center;gap:0.8rem;}
+  .war-card-slot label{font-family:'Orbitron',sans-serif;font-size:0.72rem;letter-spacing:1px;color:var(--muted);}
+  .playing-card{width:100px;height:140px;border-radius:10px;background:var(--surface);border:2px solid rgba(139,92,246,0.3);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-family:'Orbitron',sans-serif;font-weight:700;position:relative;overflow:hidden;}
+  .playing-card.red-card{color:#ef5350;}.playing-card.black-card{color:#e8eaf6;}
+  .playing-card.winner{border-color:var(--gold);box-shadow:0 0 20px rgba(251,191,36,0.35);}
+  .vs-text{font-family:'Orbitron',sans-serif;font-size:1.75rem;font-weight:700;color:var(--muted);}
+  .card-back{background:repeating-linear-gradient(45deg,#020b18,#020b18 4px,#0a1628 4px,#0a1628 8px);border:2px solid rgba(139,92,246,0.4)!important;}
+  .bj-table{background:linear-gradient(135deg,#020b18 0%,#050d20 50%,#030812 100%);border-radius:16px;padding:1.5rem;min-height:280px;border:1px solid rgba(56,189,248,0.15);box-shadow:inset 0 0 40px rgba(56,189,248,0.03);}
+  .bj-hand{margin-bottom:1rem;}
+  .bj-hand-label{font-family:'Orbitron',sans-serif;font-size:0.72rem;letter-spacing:1px;color:var(--muted);margin-bottom:0.6rem;}
+  .bj-cards{display:flex;flex-wrap:wrap;gap:0.5rem;}
+  .bj-card{width:55px;height:80px;border-radius:6px;background:white;display:flex;flex-direction:column;padding:4px;justify-content:space-between;border:1px solid #ddd;font-weight:700;}
+  .bj-card.red{color:#c0392b;}.bj-card.black{color:#1a1a1a;}
+  .bj-card .top{font-size:0.7rem;}.bj-card .ctr{font-size:1.1rem;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;}
+  .bj-card.hidden{background:repeating-linear-gradient(45deg,#1a2540,#1a2540 4px,#0e1520 4px,#0e1520 8px);border-color:var(--border);}
+  .bj-score{font-family:'Orbitron',sans-serif;font-size:0.85rem;color:var(--accent2);margin-top:0.4rem;}
+  .bj-actions{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem;}
+  .mines-grid{display:grid;gap:6px;margin:0 auto;}
+  .mine-cell{aspect-ratio:1;border-radius:8px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;transition:all 0.2s;}
+  .mine-cell:hover:not(.safe):not(.bomb):not(.bomb-reveal){background:var(--surface3);border-color:var(--cyan);transform:scale(1.05);}
+  .mine-cell.safe{background:rgba(0,230,118,0.15);border-color:rgba(0,230,118,0.5);cursor:default;}
+  .mine-cell.bomb{background:rgba(255,23,68,0.2);border-color:var(--red);cursor:default;}
+  .mine-cell.bomb-reveal{background:rgba(255,23,68,0.1);border-color:rgba(255,23,68,0.3);cursor:default;}
+  .mult-display{text-align:center;margin-bottom:0.8rem;}
+  .mult-big{font-family:'Orbitron',sans-serif;font-size:2.25rem;font-weight:700;color:var(--gold);}
+  .mult-lbl{font-size:0.75rem;color:var(--muted);}
+  .rc-field{border-radius:12px;overflow:hidden;position:relative;height:320px;background:linear-gradient(180deg,#000510 0%,#020b1a 50%,#0a0020 100%);border:1px solid rgba(56,189,248,0.2);}
+  .rc-row{height:40px;position:relative;}
+  .rc-row.safe-zone{background:rgba(49,46,129,0.6);border-bottom:1px solid rgba(139,92,246,0.3);}.rc-row.road{background:rgba(8,12,24,0.95);border-bottom:1px dashed rgba(56,189,248,0.15);}
+  .rc-road-lines{position:absolute;top:50%;left:0;right:0;height:1px;background:repeating-linear-gradient(to right,rgba(56,189,248,0.25) 0,rgba(56,189,248,0.25) 16px,transparent 16px,transparent 32px);}
+  .rc-player,.rc-car{position:absolute;font-size:1.4rem;z-index:5;}
+  .rc-car{z-index:4;}
+  .rc-info{display:flex;justify-content:space-between;margin-bottom:0.8rem;}
+  .rc-mult{font-family:'Orbitron',sans-serif;font-size:1.6rem;font-weight:700;color:var(--gold);}
+  .rc-lvl{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+  .rc-potential-val{font-family:'Orbitron',sans-serif;font-size:1.15rem;color:var(--gold);}
+  .rc-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.8rem;}
+  .history-list{max-height:150px;overflow-y:auto;margin-top:0.5rem;}
+  .history-item{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+  .h-win{color:var(--green);}.h-lose{color:var(--red);}
+  .notif{position:fixed;top:72px;right:1.5rem;z-index:1000;padding:0.75rem 1.25rem;border-radius:var(--radius-sm);font-weight:600;font-size:0.88rem;opacity:0;transform:translateX(40px);transition:all 0.3s;pointer-events:none;backdrop-filter:blur(8px);}
+  .notif.win{background:rgba(0,230,118,0.2);border:1px solid var(--green);color:var(--green);}
+  .notif.lose{background:rgba(255,23,68,0.2);border:1px solid var(--red);color:var(--red);}
+  .notif.show{opacity:1;transform:translateX(0);}
+  .fair-panel{margin-top:1rem;padding:0.8rem;background:var(--surface2);border-radius:10px;font-size:0.72rem;word-break:break-all;color:var(--muted);line-height:1.5;}
+  .fair-panel strong{color:var(--accent2);display:block;margin-bottom:0.3rem;font-family:'Orbitron',sans-serif;font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;}
+  .fair-panel .val{color:var(--text);font-family:monospace;font-size:0.68rem;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;display:none;align-items:center;justify-content:center;padding:1rem;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;}
+  .modal h2{font-family:'Orbitron',sans-serif;letter-spacing:1px;margin-bottom:1rem;color:var(--accent2);}
+  .modal p{font-size:0.85rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;}
+  .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;}
+  .edge-tag{display:inline-block;background:rgba(255,215,64,0.15);color:var(--gold);padding:0.15rem 0.5rem;border-radius:4px;font-size:0.7rem;margin-left:0.5rem;}
+  /* DICE */
+  .dice-display{text-align:center;padding:2rem 1rem;}
+  .dice-result{font-family:'Orbitron',sans-serif;font-size:3.5rem;font-weight:700;color:var(--gold);line-height:1;}
+  .dice-bar{height:12px;background:var(--surface2);border-radius:6px;margin:1.2rem 0;position:relative;overflow:hidden;}
+  .dice-bar-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:6px;transition:width 0.8s ease;width:0;}
+  .dice-target-line{position:absolute;top:-4px;width:2px;height:20px;background:var(--gold);transform:translateX(-50%);}
+  .dice-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+  .dice-btns .btn{margin-top:0;}
+  .dice-btns .btn.active{outline:2px solid var(--gold);}
+  .dice-payout{font-size:0.85rem;color:var(--muted);text-align:center;margin-top:0.5rem;}
+  /* PLINKO */
+  .plinko-wrap{display:flex;justify-content:center;overflow:hidden;}
+  .plinko-board{position:relative;width:100%;max-width:420px;height:340px;}
+  .plinko-peg{position:absolute;width:7px;height:7px;background:radial-gradient(circle,#fff 0%,var(--cyan) 60%,transparent 100%);border-radius:50%;transform:translate(-50%,-50%);opacity:0.85;box-shadow:0 0 4px var(--cyan);}
+  .plinko-ball{position:absolute;width:14px;height:14px;background:radial-gradient(circle,#fff 0%,var(--gold) 50%,#f59e0b 100%);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 18px var(--gold),0 0 6px #fff;z-index:10;transition:left 0.12s ease, top 0.12s ease;}
+  .plinko-slots{display:flex;gap:3px;margin-top:0.5rem;}
+  .plinko-slot{flex:1;text-align:center;padding:0.35rem 0;border-radius:6px;font-family:'Orbitron',sans-serif;font-size:0.68rem;font-weight:700;background:var(--surface2);border:1px solid var(--border);}
+  .plinko-slot.landed{border-color:var(--gold);background:rgba(255,215,64,0.15);color:var(--gold);}
+  /* CRASH */
+  .crash-canvas-wrap{background:linear-gradient(180deg,#000510 0%,#020918 100%);border-radius:12px;padding:1rem;height:220px;position:relative;overflow:hidden;border:1px solid rgba(56,189,248,0.15);}
+  #crash-canvas{width:100%;height:100%;display:block;}
+  .crash-mult-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+  .crash-mult-big{font-family:'Orbitron',sans-serif;font-size:3rem;font-weight:700;color:var(--green);text-shadow:0 0 20px rgba(52,211,153,0.4);}
+  .crash-mult-big.crashed{color:var(--red);text-shadow:0 0 20px rgba(248,113,113,0.5);}
+  .crash-history-row{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.8rem;}
+  .crash-chip{padding:0.25rem 0.5rem;border-radius:6px;font-size:0.72rem;font-family:'Orbitron',sans-serif;font-weight:600;background:var(--surface2);}
+  .crash-chip.low{color:var(--cyan);}.crash-chip.mid{color:var(--gold);}.crash-chip.high{color:var(--red);}
+  /* KENO */
+  .keno-board{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:480px;margin:0 auto;}
+  .keno-num{aspect-ratio:1;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .keno-num:hover{border-color:var(--cyan);}
+  .keno-num.picked{background:rgba(0,229,255,0.2);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 6px rgba(56,189,248,0.4);}
+  .keno-num.drawn{background:rgba(224,64,251,0.25);border-color:var(--magenta);}
+  .keno-num.hit{background:rgba(0,230,118,0.3);border-color:var(--green);color:var(--green);box-shadow:0 0 8px rgba(52,211,153,0.5);}
+  .keno-info{text-align:center;margin:0.8rem 0;font-size:0.85rem;color:var(--muted);}
+  /* ROULETTE */
+  .roulette-wheel-wrap{display:flex;justify-content:center;padding:1rem;}
+  .roulette-wheel{width:200px;height:200px;border-radius:50%;border:4px solid var(--accent);box-shadow:0 0 30px rgba(139,92,246,0.5),0 0 60px rgba(139,92,246,0.2);background:conic-gradient(from 0deg,#050a1e 0deg 9.73deg,#c8d8f0 9.73deg 19.46deg,#050a1e 19.46deg 29.19deg,#c8d8f0 29.19deg 38.92deg,#050a1e 38.92deg 48.65deg,#c8d8f0 48.65deg 58.38deg,#050a1e 58.38deg 68.11deg,#c8d8f0 68.11deg 77.84deg,#050a1e 77.84deg 87.57deg,#c8d8f0 87.57deg 97.3deg,#050a1e 97.3deg 107.03deg,#c8d8f0 107.03deg 116.76deg,#050a1e 116.76deg 126.49deg,#c8d8f0 126.49deg 136.22deg,#050a1e 136.22deg 145.95deg,#c8d8f0 145.95deg 155.68deg,#050a1e 155.68deg 165.41deg,#c8d8f0 165.41deg 175.14deg,#050a1e 175.14deg 184.87deg,#c8d8f0 184.87deg 194.6deg,#050a1e 194.6deg 204.33deg,#c8d8f0 204.33deg 214.06deg,#050a1e 214.06deg 223.79deg,#c8d8f0 223.79deg 233.52deg,#050a1e 233.52deg 243.25deg,#c8d8f0 243.25deg 252.98deg,#050a1e 252.98deg 262.71deg,#c8d8f0 262.71deg 272.44deg,#050a1e 272.44deg 282.17deg,#c8d8f0 282.17deg 291.9deg,#050a1e 291.9deg 301.63deg,#c8d8f0 301.63deg 311.36deg,#050a1e 311.36deg 321.09deg,#c8d8f0 321.09deg 330.82deg,#050a1e 330.82deg 340.55deg,#c8d8f0 340.55deg 350.28deg,#8b5cf6 350.28deg 360deg);display:flex;align-items:center;justify-content:center;transition:transform 3s cubic-bezier(0.2,0.8,0.3,1);position:relative;}
+  .roulette-center{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,#1a0a2e,#0b0f1a);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;color:var(--gold);z-index:2;}
+  .roulette-pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:1.2rem;color:var(--accent);}
+  .roulette-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-top:0.8rem;}
+  .roulette-bets .btn{margin-top:0;padding:0.6rem;font-size:0.85rem;}
+  .roulette-bets .btn.active{outline:2px solid var(--gold);}
+  .roulette-num-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:0.5rem;max-height:120px;overflow-y:auto;}
+  .roulette-num-btn{padding:0.35rem;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.72rem;cursor:pointer;font-family:'Orbitron',sans-serif;}
+  .roulette-num-btn.active{outline:2px solid var(--gold);}
+  .roulette-num-btn.red{background:rgba(5,10,30,0.7);}
+  .roulette-num-btn.black{background:rgba(200,216,240,0.15);}
+  .roulette-num-btn.green{background:rgba(139,92,246,0.3);}
+  /* RPS */
+  .rps-arena{display:flex;align-items:center;justify-content:center;gap:2rem;padding:2rem;min-height:200px;}
+  .rps-choice{width:90px;height:90px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:2.8rem;cursor:pointer;transition:all 0.2s;}
+  .rps-choice:hover{border-color:var(--cyan);transform:scale(1.08);}
+  .rps-choice.selected{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,64,0.3);}
+  .rps-vs{font-family:'Orbitron',sans-serif;font-size:1.35rem;color:var(--muted);}
+  .rps-hand{font-size:4rem;text-align:center;min-height:80px;}
+  .rps-picks{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;}
+  .site-footer{
+    position:relative;z-index:5;text-align:center;padding:1.5rem;border-top:1px solid var(--border);
+    color:var(--muted);font-size:0.75rem;margin-top:1rem;
+  }
+  .site-footer span{color:var(--accent2);font-family:'Orbitron',sans-serif;font-weight:600;}
+
+  /* ── MOBILE / PWA ENHANCEMENTS ── */
+  html { -webkit-tap-highlight-color: transparent; }
+  body { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+  /* Bigger touch targets on mobile */
+  @media (max-width: 600px) {
+    .btn { padding: 0.9rem; font-size: 0.85rem; }
+    .game-card { min-height: 130px; }
+    .game-card-img { height: 80px; font-size: 2.2rem; }
+    .back-btn { padding: 0.6rem 1.1rem; font-size: 0.85rem; }
+    .site-main { padding: 1rem 0.75rem 1rem; }
+    .header-inner { padding: 0.65rem 1rem; }
+    .logo-brand { font-size: 1rem; }
+    .stats-row { gap: 0.5rem; }
+    .stat-val { font-size: 0.95rem; }
+    .games-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+    .panel { padding: 1rem; }
+    .roulette-wheel { width: 160px; height: 160px; }
+    .bj-card { width: 46px; height: 68px; }
+    .war-arena { gap: 1rem; padding: 1.25rem 0.5rem; }
+    .playing-card { width: 80px; height: 112px; font-size: 1.9rem; }
+    .rps-choice { width: 75px; height: 75px; font-size: 2.2rem; }
+    .lobby-hero h1 { font-size: 1.35rem; }
+    input[type=number], select { font-size: 16px; } /* prevent iOS zoom */
+  }
+
+  /* Bottom nav */
+  #bottom-nav {
+    position: fixed; bottom: 0; left: 260px; right: 0; z-index: 500;
+    background: rgba(11,15,26,0.97);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    backdrop-filter: blur(12px);
+    transition: left 0.25s ease;
+  }
+  .chat-sidebar.collapsed ~ * #bottom-nav,
+  .site-wrap.chat-collapsed ~ * #bottom-nav { left: 48px; }
+  .chat-input-wrap {
+    padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  }
+  .bnav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; padding: 0.55rem 0.25rem;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 0.62rem; font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.5px; text-transform: uppercase; transition: color 0.15s;
+    min-height: 56px;
+  }
+  .bnav-btn span:first-child { font-size: 1.35rem; line-height: 1; }
+  .bnav-btn.active { color: var(--accent2); }
+  .bnav-btn:active { opacity: 0.7; }
+
+  /* Add bottom padding to main content so it clears the nav */
+  .site-main { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+  .site-footer { margin-bottom: 60px; }
+
+  /* Coin balance badge */
+  .wallet-val::before { content: ''; }
+  .wallet { display: flex; align-items: center; gap: 0.4rem; }
+
+
+  /* ── SPACE THEME EXTRAS ── */
+
+  /* War card: space glow on winner */
+  .playing-card.winner{border-color:var(--accent)!important;box-shadow:0 0 20px rgba(139,92,246,0.5);}
+  .playing-card.red-card{color:#c084fc;}   /* purple for "red" suit = nebula */
+  .playing-card.black-card{color:#e2e8f0;} /* silver for "black" = stardust */
+
+  /* Crash canvas rocket trail */
+  #crash-canvas{width:100%;height:100%;display:block;}
+
+  /* Mine cell space styling */
+  .mine-cell{background:radial-gradient(circle at 50% 50%,#0d1627,#060d1a);border:1px solid rgba(56,189,248,0.15);}
+  .mine-cell:hover:not(.safe):not(.bomb):not(.bomb-reveal){background:radial-gradient(circle,#0d2040,#060d1a);border-color:var(--cyan);}
+  .mine-cell.safe{background:radial-gradient(circle,rgba(52,211,153,0.2),rgba(0,0,0,0));border-color:var(--green);}
+  .mine-cell.bomb{background:radial-gradient(circle,rgba(251,191,36,0.25),rgba(0,0,0,0));border-color:var(--gold);}
+
+  /* Keno board space look */
+  .keno-num{background:radial-gradient(circle at 30% 30%,#0d1a30,#060d1a);font-size:0.7rem;}
+  .keno-num.drawn{background:radial-gradient(circle,rgba(192,132,252,0.3),rgba(0,0,0,0));border-color:var(--magenta);}
+
+  /* Roulette bets active pulse */
+  .roulette-bets .btn.active{outline:2px solid var(--accent);box-shadow:0 0 12px rgba(139,92,246,0.4);}
+
+  /* RPS choice space styling */
+  .rps-choice{font-size:2.2rem;border-radius:16px;}  /* less round, more "tech" */
+  .rps-choice.selected{border-color:var(--accent);box-shadow:0 0 20px rgba(139,92,246,0.4);}
+
+  /* Plinko board background: starfield */
+  .plinko-board{background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,0.05),transparent 70%),
+    linear-gradient(180deg,#020b18,#050d20);}
+  .plinko-slot{background:radial-gradient(circle,#0d1a30,#060d1a);}
+  .plinko-slot.landed{border-color:var(--accent);background:rgba(139,92,246,0.15);color:var(--accent);box-shadow:0 0 10px rgba(139,92,246,0.3);}
+
+  /* Crash chips space colors */
+  .crash-chip{background:rgba(10,20,40,0.8);border:1px solid rgba(56,189,248,0.1);}
+
+  /* Road cross safe zone → launch pad */
+  .rc-row.safe-zone::before{content:'🛸';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.1rem;opacity:0.3;}
+
+  /* Dice bar: space gradient */
+  .dice-bar-fill{background:linear-gradient(90deg,var(--accent),var(--cyan),var(--magenta));}
+
+  /* Game cards hover: add nebula glow */
+  .game-card:hover{border-color:rgba(139,92,246,0.6);box-shadow:0 12px 40px rgba(0,0,0,0.5),0 0 20px rgba(139,92,246,0.2);}
+
+  /* Section titles space look */
+  .section-title{color:var(--accent2);}
+
+  /* Smooth scrolling */
+  html { scroll-behavior: smooth; }
+
+  /* ── DUEL-STYLE BLACKJACK TABLE ── */
+  .bj-duel-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    border-radius: 24px;
+    overflow: visible;
+    background: #060d1f;
+    border-radius: 24px;
+    padding-bottom: 8px;
+  }
+  /* Inner clipping only for the space canvas area */
+  .bj-space-bg {
+    position: relative;
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    overflow: hidden;
+    aspect-ratio: 16/8;
+    min-height: 260px;
+    max-height: 420px;
+    background: #060d1f;
+  }
+  #bj-space-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Planet table — sits inside .bj-space-bg, pushed down so top arc shows */
+  .bj-planet-table {
+    position: absolute;
+    bottom: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    aspect-ratio: 2/1;
+    border-radius: 50% 50% 50% 50% / 100% 100% 0 0;
+    background: radial-gradient(ellipse at 45% 30%, #1a3a6e 0%, #0d2550 30%, #061535 65%, #020b22 100%);
+    border: 2.5px solid rgba(100, 160, 255, 0.35);
+    box-shadow:
+      0 0 60px rgba(56,130,255,0.25),
+      inset 0 0 60px rgba(20,60,140,0.4),
+      0 0 0 6px rgba(56,130,255,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5% 8% 0;
+    z-index: 1;
+  }
+  /* Planet surface texture lines */
+  .bj-planet-table::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        transparent 0, transparent 18px,
+        rgba(56,130,255,0.04) 18px, rgba(56,130,255,0.04) 19px
+      );
+    pointer-events: none;
+  }
+  .bj-planet-table::after {
+    content: '';
+    position: absolute;
+    top: 8%;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    border-radius: 50%;
+    background: rgba(100,180,255,0.12);
+    box-shadow: 0 0 30px 2px rgba(56,130,255,0.15);
+    pointer-events: none;
+  }
+
+  /* Player zone sits BELOW the space bg, always fully visible */
+  .bj-player-zone-outer {
+    background: rgba(6,13,31,0.97);
+    border: 1px solid rgba(56,130,255,0.18);
+    border-top: none;
+    border-radius: 0 0 20px 20px;
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bj-duel-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+  }
+  .bj-zone-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(0.5rem, 1.2vw, 0.72rem);
+    letter-spacing: 2px;
+    color: rgba(148,180,255,0.75);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bj-score-badge {
+    background: rgba(56,130,255,0.18);
+    border: 1px solid rgba(56,130,255,0.35);
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-size: 0.75em;
+    color: var(--accent2);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  /* Arc text in center like "BLACKJACK PAYS 3 TO 2" */
+  .bj-table-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 2;
+    width: 70%;
+  }
+  .bj-table-arc-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(0.38rem, 0.9vw, 0.55rem);
+    letter-spacing: 2px;
+    color: rgba(100,160,255,0.4);
+    text-transform: uppercase;
+  }
+  .bj-table-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1rem, 3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: 6px;
+    color: rgba(120,180,255,0.35);
+    margin: 2px 0;
+  }
+
+  .bj-cards-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    min-height: 70px;
+    align-items: center;
+  }
+
+  /* Stacked hole card: first dealer card group shows face-up card with hidden card peeking behind */
+  .bj-hole-stack {
+    position: relative;
+    width: clamp(38px, 6vw, 58px);
+    height: clamp(55px, 9vw, 85px);
+    flex-shrink: 0;
+  }
+  .bj-hole-stack .bj-hole-card {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    animation: none; /* no deal animation for the hidden card under */
+  }
+  .bj-hole-stack .bj-face-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  /* New larger, better-looking cards */
+  .bj-duel-card {
+    width: clamp(38px, 6vw, 58px);
+    height: clamp(55px, 9vw, 85px);
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    padding: 3px 4px;
+    justify-content: space-between;
+    font-weight: 700;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: bjCardDeal 0.35s cubic-bezier(0.22,1,0.36,1) both;
+    position: relative;
+    transform-origin: top center;
+    flex-shrink: 0;
+  }
+  @keyframes bjCardDeal {
+    from { opacity: 0; transform: translateY(-40px) rotate(-8deg) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  }
+  @keyframes bjCardFlip {
+    from { opacity: 0; transform: rotateY(90deg) scale(0.9); }
+    to   { opacity: 1; transform: rotateY(0deg) scale(1); }
+  }
+  @keyframes bjCardSlideIn {
+    from { opacity: 0; transform: translateX(-24px) scale(0.88); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  .bj-duel-card.red  { color: #c0392b; }
+  .bj-duel-card.black { color: #111; }
+  .bj-duel-card .bj-dc-top { font-size: clamp(0.5rem, 1.1vw, 0.72rem); line-height: 1; }
+  .bj-duel-card .bj-dc-ctr { font-size: clamp(0.9rem, 2vw, 1.4rem); text-align: center; flex: 1; display: flex; align-items: center; justify-content: center; }
+  .bj-duel-card .bj-dc-bot { font-size: clamp(0.5rem, 1.1vw, 0.72rem); line-height: 1; transform: rotate(180deg); }
+  .bj-duel-card.bj-hidden {
+    background: repeating-linear-gradient(135deg, #0f1f40 0, #0f1f40 5px, #0a1530 5px, #0a1530 10px);
+    border-color: rgba(56,130,255,0.4);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5), 0 0 12px rgba(56,130,255,0.2);
+  }
+  .bj-duel-card.bj-winner {
+    box-shadow: 0 0 0 2px var(--gold), 0 0 20px rgba(251,191,36,0.5), 0 4px 18px rgba(0,0,0,0.5);
+  }
+
+  /* Deck stack top-right */
+  .bj-deck-stack {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: clamp(38px, 6vw, 54px);
+    height: clamp(55px, 8vw, 78px);
+    z-index: 5;
+  }
+  .bj-deck-card {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: repeating-linear-gradient(135deg, #0f1f40 0, #0f1f40 5px, #0a1530 5px, #0a1530 10px);
+    border: 1px solid rgba(56,130,255,0.4);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+  .bj-deck-card-3 { transform: translate(4px, 4px); }
+  .bj-deck-card-2 { transform: translate(2px, 2px); }
+  .bj-deck-card-1 { transform: none; }
+
+  /* Result overlay */
+  .bj-result-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: 3px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    text-shadow: 0 0 40px currentColor;
+  }
+  .bj-result-overlay.show { opacity: 1; }
+  .bj-result-overlay.win  { color: var(--green); }
+  .bj-result-overlay.lose { color: var(--red); }
+  .bj-result-overlay.push { color: var(--gold); }
+
+  /* ── CONTROLS BAR ── */
+  .bj-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: rgba(10,15,30,0.96);
+    border: 1px solid rgba(56,130,255,0.18);
+    border-radius: 16px;
+    padding: 0.9rem 1.2rem;
+    margin: 0.6rem auto 0;
+    max-width: 900px;
+    flex-wrap: wrap;
+  }
+  .bj-controls-left {
+    flex-shrink: 0;
+  }
+  .bj-toggle-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .bj-toggle {
+    width: 40px;
+    height: 22px;
+    background: var(--surface2);
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+  .bj-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .bj-toggle.on { background: rgba(56,189,248,0.3); border-color: var(--cyan); }
+  .bj-toggle.on::after { transform: translateX(18px); background: var(--cyan); }
+
+  .bj-controls-center {
+    flex: 1;
+    min-width: 240px;
+  }
+  .bj-bet-section { display: flex; flex-direction: column; gap: 6px; }
+  .bj-bet-label { font-size: 0.75rem; color: var(--muted); display: flex; justify-content: space-between; }
+  .bj-bet-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.3rem 0.5rem;
+  }
+  .bj-bet-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bj-bet-icon { font-size: 1rem; }
+  .bj-bet-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    width: 100%;
+    min-width: 0;
+  }
+  .bj-quick-btn {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .bj-quick-btn:hover { background: rgba(139,92,246,0.2); border-color: var(--accent); }
+  .bj-max-btn { color: var(--muted); }
+
+  .bj-ingame-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .bj-action-btn {
+    flex: 1;
+    padding: 0.55rem 0.5rem;
+    border: none;
+    border-radius: 9px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .bj-action-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  .bj-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .bj-hit-btn { background: linear-gradient(135deg,#3b82f6,#1d4ed8); color: #fff; }
+  .bj-stand-btn { background: var(--surface3); border: 1px solid var(--border); color: var(--text); }
+  .bj-double-btn { background: linear-gradient(135deg,var(--accent),#6366f1); color: #fff; }
+
+  .bj-controls-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .bj-icon-btns { display: flex; gap: 6px; }
+  .bj-icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .bj-icon-btn:hover { border-color: var(--accent); color: var(--accent2); }
+  .bj-place-bet-btn {
+    background: linear-gradient(135deg,#4f8ef7,#3b6fe0);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1.6rem;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    box-shadow: 0 0 20px rgba(79,142,247,0.35);
+    white-space: nowrap;
+  }
+  .bj-place-bet-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  .bj-place-bet-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  @media (max-width: 600px) {
+    .bj-controls-bar { flex-direction: column; align-items: stretch; }
+    .bj-controls-right { align-items: stretch; }
+    .bj-place-bet-btn { text-align: center; }
+  }
+
+  /* Improve notif position on mobile */
+  @media (max-width: 600px) {
+    .notif { right: 0.75rem; left: 0.75rem; top: 65px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="notif" id="notif"></div>
+<div class="modal-overlay" id="fair-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeFairModal()">&times;</button>
+    <h2>Provably Fair</h2>
+    <p>Outcomes are locked in before you play. Spacemob commits a server seed hash, combines it with your client seed, and derives every result verifiably.</p>
+    <div class="ctrl-row">
+      <div class="ctrl-label">Your Client Seed</div>
+      <input type="text" id="modal-client-seed" maxlength="64">
+      <button class="btn btn-secondary" style="margin-top:0.5rem" onclick="saveClientSeed()">Save Client Seed</button>
+    </div>
+    <div class="fair-panel"><strong>Active Server Seed Hash (commitment)</strong><span class="val" id="modal-hash">—</span></div>
+    <div class="fair-panel"><strong>Last Revealed Server Seed</strong><span class="val" id="modal-revealed">Play a round to reveal</span></div>
+    <div class="fair-panel"><strong>House Edge</strong><span class="val">3% built into payout math — outcomes are fair-random, payouts are adjusted</span></div>
+    <button class="btn btn-primary" onclick="rotateServerSeed()">Rotate Server Seed</button>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🚀</div>
+      <div class="logo-text">
+        <span class="logo-brand">Spacemob</span>
+        <span class="logo-sub">Space Casino</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="fair-badge" onclick="openFairModal()">✓ Provably Fair</div>
+      <div class="wallet"><strong>Balance</strong> · <span class="wallet-val" id="wallet-display">🪙 1,000</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="site-main">
+  <div class="site-wrap">
+
+    <!-- CHAT SIDEBAR -->
+    <aside class="chat-sidebar" id="chat-sidebar">
+      <div class="chat-header">
+        <span class="chat-header-title">💬 Live Chat</span>
+        <span class="chat-online" id="chat-online-count"><span></span>24 online</span>
+        <button class="chat-toggle-btn" onclick="chatToggle()" title="Collapse">◀</button>
+      </div>
+      <div class="chat-body" id="chat-body"></div>
+      <div class="chat-input-wrap">
+        <input class="chat-input" id="chat-input" placeholder="Say something…" maxlength="200"
+          onkeydown="if(event.key==='Enter')chatSend()" />
+        <button class="chat-send-btn" onclick="chatSend()">➤</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="site-content">
+  <div class="container">
+  <div class="screen active" id="screen-lobby">
+    <!-- SPACE HERO BANNER -->
+    <div class="lobby-hero" style="position:relative;overflow:hidden;border-radius:20px;min-height:320px;margin-bottom:2.5rem;background:linear-gradient(180deg,#000814 0%,#001233 40%,#023e8a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1rem 2rem;">
+      <!-- Stars layer -->
+      <canvas id="hero-stars" style="position:absolute;inset:0;pointer-events:none;z-index:0;"></canvas>
+      <!-- Planets -->
+      <div style="position:absolute;top:-30px;right:8%;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#7c3aed,#3730a3,#1e1b4b);box-shadow:0 0 60px rgba(124,58,237,0.6),inset -20px -10px 40px rgba(0,0,0,0.5);z-index:1;opacity:0.85;"></div>
+      <div style="position:absolute;bottom:-20px;left:5%;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#f97316,#9a3412,#431407);box-shadow:0 0 40px rgba(249,115,22,0.5),inset -15px -8px 30px rgba(0,0,0,0.5);z-index:1;opacity:0.75;"></div>
+      <div style="position:absolute;top:20px;left:12%;width:55px;height:55px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e2e8f0,#64748b,#1e293b);box-shadow:0 0 20px rgba(148,163,184,0.4);z-index:1;opacity:0.6;"></div>
+      <!-- Planet rings (big one) -->
+      <div style="position:absolute;top:-10px;right:calc(8% - 30px);width:220px;height:40px;border-radius:50%;border:6px solid rgba(167,139,250,0.35);transform:rotateX(70deg);z-index:0;"></div>
+      <!-- Content -->
+      <div style="position:relative;z-index:2;text-align:center;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;letter-spacing:2px;color:#fff;line-height:1.15;margin-bottom:0.75rem;text-shadow:0 0 40px rgba(139,92,246,0.8);">
+          The Space Casino<br><span style="background:linear-gradient(135deg,#a855f7,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">That&#39;s Truly Fair.</span>
+        </div>
+        <div style="color:rgba(148,163,184,0.9);font-size:0.95rem;margin-bottom:1.5rem;line-height:1.6;">
+          Provably fair · Zero house tricks · 100% RTP
+        </div>
+        <div style="display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;">
+          <div style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);border-radius:30px;padding:0.45rem 1.1rem;font-size:0.75rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:#a855f7;">🔐 Provably Fair</div>
+          <div style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.35);border-radius:30px;padding:0.45rem 1.1rem;font-size:0.75rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:#38bdf8;">🪙 Space Coins</div>
+          <div style="background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);border-radius:30px;padding:0.45rem 1.1rem;font-size:0.75rem;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:#34d399;">⚡ Instant Play</div>
+        </div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      const c=document.getElementById('hero-stars');
+      if(!c)return;
+      function resize(){c.width=c.parentElement.offsetWidth;c.height=c.parentElement.offsetHeight;}
+      resize();
+      const ctx=c.getContext('2d');
+      const stars=Array.from({length:180},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.4+0.2,a:Math.random()}));
+      function draw(){ctx.clearRect(0,0,c.width,c.height);stars.forEach(s=>{ctx.beginPath();ctx.arc(s.x*c.width,s.y*c.height,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${0.3+s.a*0.5})`;ctx.fill();});}
+      draw();
+      window.addEventListener('resize',()=>{resize();draw();});
+    })();
+    </script>
+
+    <section class="game-section">
+      <h2 class="section-title">⭐ Spacemob Originals</h2>
+      <div class="games-grid">
+        <div class="game-card gc-purple" onclick="openGame('blackjack')">
+          <div class="game-card-img">🃏</div>
+          <div class="game-card-info"><div class="game-card-name">Cosmic 21</div><div class="game-card-sub">Space blackjack · hit or orbit</div></div>
+        </div>
+        <div class="game-card gc-gold" onclick="openGame('war')">
+          <div class="game-card-img">⚡</div>
+          <div class="game-card-info"><div class="game-card-name">Star Battle</div><div class="game-card-sub">Galaxy high-card duel</div></div>
+        </div>
+        <div class="game-card gc-red" onclick="openGame('roulette')">
+          <div class="game-card-img">🌀</div>
+          <div class="game-card-info"><div class="game-card-name">Orbit Spin</div><div class="game-card-sub">Black hole · white dwarf · nebula</div></div>
+        </div>
+        <div class="game-card gc-orange" onclick="openGame('crash')">
+          <div class="game-card-img">🚀</div>
+          <div class="game-card-info"><div class="game-card-name">Rocket Launch</div><div class="game-card-sub">Eject before it explodes</div></div>
+        </div>
+        <div class="game-card gc-blue" onclick="openGame('dice')">
+          <div class="game-card-img">🎲</div>
+          <div class="game-card-info"><div class="game-card-name">Nebula Dice</div><div class="game-card-sub">Predict the trajectory</div></div>
+        </div>
+        <div class="game-card gc-cyan" onclick="openGame('plinko')">
+          <div class="game-card-img">☄️</div>
+          <div class="game-card-info"><div class="game-card-name">Comet Drop</div><div class="game-card-sub">Through the asteroid field</div></div>
+        </div>
+        <div class="game-card gc-pink" onclick="openGame('mines')">
+          <div class="game-card-img">💎</div>
+          <div class="game-card-info"><div class="game-card-name">Asteroid Field</div><div class="game-card-sub">Find stardust, dodge rocks</div></div>
+        </div>
+        <div class="game-card gc-teal" onclick="openGame('keno')">
+          <div class="game-card-img">🔭</div>
+          <div class="game-card-info"><div class="game-card-name">Star Chart</div><div class="game-card-sub">Map the galaxy · win big</div></div>
+        </div>
+        <div class="game-card gc-green" onclick="openGame('rps')">
+          <div class="game-card-img">🛰️</div>
+          <div class="game-card-info"><div class="game-card-name">Alien Standoff</div><div class="game-card-sub">Satellite · shield · laser</div></div>
+        </div>
+        <div class="game-card gc-indigo" onclick="openGame('roadcross')">
+          <div class="game-card-img">🛸</div>
+          <div class="game-card-info"><div class="game-card-name">Warp Gauntlet</div><div class="game-card-sub">Dodge missile lanes</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- WAR -->
+  <div class="screen" id="screen-war">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--red)">
+        <div class="game-title">⚡ Star Battle</div><span class="game-tag">Galactic Table</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="war-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="war-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="war-streak">0</div><div class="stat-lbl">Streak</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">⚡ Nebula Arena</div>
+        <div class="war-arena">
+          <div class="war-card-slot"><label>YOUR SHIP</label><div class="playing-card card-back" id="war-player-card"></div></div>
+          <div class="vs-text">⚡</div>
+          <div class="war-card-slot"><label>ALIEN SHIP</label><div class="playing-card card-back" id="war-dealer-card"></div></div>
+        </div>
+        <div class="msg msg-info" id="war-msg">Planetary force locked at deal. Highest orbit wins the nebula.</div>
+        <div class="fair-panel" id="war-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="war-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="war-bet" value="5" min="1" max="500" oninput="document.getElementById('war-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-row"><div class="ctrl-label">Tie Rule</div>
+          <select id="war-tie-mode"><option value="dealer">Alien Wins</option><option value="push">Push</option><option value="war">Warp Clash (2x)</option></select></div>
+        <div class="ctrl-row"><div class="ctrl-label">Decks <span id="war-decks-disp">1</span></div>
+          <input type="range" id="war-decks" min="1" max="8" value="1" oninput="document.getElementById('war-decks-disp').textContent=this.value"></div>
+        <button class="btn btn-danger" id="war-deal-btn" onclick="warDeal()">⚡ ENGAGE</button>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem;text-align:center">Win pays 1:1 · House wins 51%</p>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="war-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLACKJACK -->
+  <div class="screen" id="screen-blackjack">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+    </div>
+
+    <!-- FULL DUEL-STYLE BLACKJACK TABLE -->
+    <div class="bj-duel-wrap">
+      <!-- Space background + planet (clipped area) -->
+      <div class="bj-space-bg">
+        <canvas id="bj-space-canvas"></canvas>
+
+        <!-- Planet table surface -->
+        <div class="bj-planet-table">
+          <!-- Dealer hand area -->
+          <div class="bj-duel-zone bj-dealer-zone">
+            <div class="bj-zone-label">🤖 ALIEN DEALER <span class="bj-score-badge" id="bj-dealer-score"></span></div>
+            <div class="bj-cards-row" id="bj-dealer-cards"></div>
+          </div>
+
+          <!-- Table center text -->
+          <div class="bj-table-center">
+            <div class="bj-table-arc-text">BLACKJACK PAYS 3 TO 2</div>
+            <div class="bj-table-logo">COSMIC 21</div>
+            <div class="bj-table-arc-text">INSURANCE PAYS 2 TO 1</div>
+          </div>
+        </div>
+
+        <!-- Deck stack (top right) -->
+        <div class="bj-deck-stack" id="bj-deck-stack">
+          <div class="bj-deck-card bj-deck-card-3"></div>
+          <div class="bj-deck-card bj-deck-card-2"></div>
+          <div class="bj-deck-card bj-deck-card-1"></div>
+        </div>
+
+        <!-- Result message overlay -->
+        <div class="bj-result-overlay" id="bj-result-overlay"></div>
+      </div>
+
+      <!-- Player zone: outside the clipped area so cards are never cut off -->
+      <div class="bj-player-zone-outer">
+        <div class="bj-cards-row" id="bj-player-cards"></div>
+        <div class="bj-zone-label">🧑‍🚀 PILOT <span class="bj-score-badge" id="bj-player-score"></span></div>
+      </div>
+    </div>
+
+    <!-- Bottom controls bar (like reference image) -->
+    <div class="bj-controls-bar">
+      <!-- Center: Bet amount + action buttons -->
+      <div class="bj-controls-center">
+        <div class="bj-bet-section">
+          <div class="bj-bet-label">Bet Amount <span style="color:var(--muted);font-size:0.72rem" id="bj-bet-eth">🪙 10</span></div>
+          <div class="bj-bet-row">
+            <div class="bj-bet-input-wrap">
+              <span class="bj-bet-icon">🪙</span>
+              <input type="number" id="bj-bet" value="10" min="1" max="500" oninput="document.getElementById('bj-bet-eth').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)" class="bj-bet-input">
+            </div>
+            <button class="bj-quick-btn" onclick="document.getElementById('bj-bet').value=Math.max(1,parseFloat(document.getElementById('bj-bet').value)/2).toFixed(2);document.getElementById('bj-bet-eth').textContent='🪙 '+parseFloat(document.getElementById('bj-bet').value).toFixed(2)">½</button>
+            <button class="bj-quick-btn" onclick="document.getElementById('bj-bet').value=Math.min(500,parseFloat(document.getElementById('bj-bet').value)*2).toFixed(2);document.getElementById('bj-bet-eth').textContent='🪙 '+parseFloat(document.getElementById('bj-bet').value).toFixed(2)">2x</button>
+            <button class="bj-quick-btn bj-max-btn" onclick="document.getElementById('bj-bet').value=Math.min(500,wallet).toFixed(2);document.getElementById('bj-bet-eth').textContent='🪙 '+parseFloat(document.getElementById('bj-bet').value).toFixed(2)">MAX</button>
+          </div>
+        </div>
+        <!-- In-game action buttons (hidden until deal) -->
+        <div class="bj-ingame-actions" id="bj-ingame-actions" style="display:none">
+          <button class="bj-action-btn bj-hit-btn" id="bj-hit" onclick="bjHit()" disabled>🚀 HIT</button>
+          <button class="bj-action-btn bj-stand-btn" id="bj-stand" onclick="bjStand()" disabled>🛑 STAND</button>
+          <button class="bj-action-btn bj-double-btn" id="bj-double" onclick="bjDouble()" disabled>⚡ DOUBLE</button>
+        </div>
+      </div>
+
+      <!-- Right: Place Bet button + icons -->
+      <div class="bj-controls-right">
+        <div class="bj-icon-btns">
+          <button class="bj-icon-btn" title="Provably Fair" onclick="openFairModal()">✓</button>
+        </div>
+        <button class="bj-place-bet-btn" id="bj-deal-btn" onclick="bjDeal()">Place Bet</button>
+      </div>
+    </div>
+
+    <!-- Stats row below controls -->
+    <div class="stats-row" style="margin-top:0.75rem;max-width:900px;margin-left:auto;margin-right:auto;">
+      <div class="stat"><div class="stat-val" id="bj-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="bj-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="bj-pushes">0</div><div class="stat-lbl">Pushes</div></div>
+    </div>
+
+    <!-- Fair panel + history (below, collapsed) -->
+    <div style="max-width:900px;margin:0.75rem auto 0;display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="panel">
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="bj-history"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Settings</div>
+        <div class="ctrl-row"><div class="ctrl-label">Decks <span id="bj-decks-disp">6</span></div>
+          <input type="range" id="bj-decks" min="1" max="8" value="6" oninput="document.getElementById('bj-decks-disp').textContent=this.value"></div>
+        <div class="ctrl-row"><div class="ctrl-label">Blackjack Pays</div>
+          <select id="bj-payout"><option value="1.5">🌟 Cosmic 21 Bonus: 3:2</option><option value="1.2">⭐ Pulsar Bonus: 6:5</option></select></div>
+        <div class="fair-panel" id="bj-fair" style="margin-top:0.5rem"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MINES -->
+  <div class="screen" id="screen-mines">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--magenta)">
+        <div class="game-title">💫 Asteroid Field</div><span class="game-tag">Danger Zone</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="mines-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="mines-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="mines-total">🪙 0</div><div class="stat-lbl">Net</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="mult-display">
+          <div class="mult-lbl">⚡ ENERGY MULT <span class="edge-tag">3% edge</span></div>
+          <div class="mult-big" id="mines-mult">1.00x</div>
+          <div class="mult-lbl">Potential: <span id="mines-potential" style="color:var(--gold)">🪙 0</span></div>
+        </div>
+        <div id="mines-grid" class="mines-grid"></div>
+        <div class="msg msg-info" id="mines-msg">☄️ Asteroid positions locked at launch. Find stardust ✨</div>
+        <button class="btn btn-green" id="mines-cashout" onclick="minesCashout()" disabled>✨ COLLECT STARDUST</button>
+        <div class="fair-panel" id="mines-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="mines-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="mines-bet" value="5" min="1" max="200" oninput="document.getElementById('mines-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-row"><div class="ctrl-label">☄️ Asteroids <span id="mines-count-disp">5</span></div>
+          <input type="range" id="mines-count" min="1" max="24" value="5" oninput="updateMinesDisplay()"></div>
+        <div class="ctrl-row"><div class="ctrl-label">Grid <span id="mines-grid-disp">5x5</span></div>
+          <select id="mines-grid-size" onchange="updateMinesDisplay()"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option></select></div>
+        <button class="btn btn-primary" id="mines-start-btn" onclick="minesStart()">🚀 LAUNCH PROBE</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="mines-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROAD CROSS -->
+  <div class="screen" id="screen-roadcross">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--green)">
+        <div class="game-title">🛸 Warp Gauntlet</div><span class="game-tag">Deep Space Run</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="rc-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="rc-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="rc-best">1.00x</div><div class="stat-lbl">Best</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="rc-info">
+          <div><div class="rc-lvl">MULTIPLIER</div><div class="rc-mult" id="rc-mult">1.00x</div></div>
+          <div style="text-align:right"><div class="rc-lvl">POTENTIAL</div><div class="rc-potential-val" id="rc-potential">🪙 0</div></div>
+        </div>
+        <div class="rc-field" id="rc-field"></div>
+        <div class="msg msg-info" id="rc-msg">🛸 Missile trajectories locked at launch. Dodge or die.</div>
+        <div class="rc-btn-row">
+          <button class="btn btn-primary" id="rc-step-btn" onclick="rcStep()" disabled>⚡ WARP</button>
+          <button class="btn btn-green" id="rc-cashout-btn" onclick="rcCashout()" disabled>🛸 WARP OUT</button>
+        </div>
+        <div class="fair-panel" id="rc-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="rc-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="rc-bet" value="5" min="1" max="200" oninput="document.getElementById('rc-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-row"><div class="ctrl-label">🛸 Missile Lanes <span id="rc-lanes-disp">5</span></div>
+          <input type="range" id="rc-lanes" min="3" max="8" value="5" oninput="document.getElementById('rc-lanes-disp').textContent=this.value;rcBuildField()"></div>
+        <div class="ctrl-row"><div class="ctrl-label">Difficulty</div>
+          <select id="rc-density"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High</option></select></div>
+        <div class="ctrl-row"><div class="ctrl-label">Mult / Lane <span id="rc-mult-inc-disp">0.25x</span></div>
+          <input type="range" id="rc-mult-inc" min="0.1" max="0.5" value="0.25" step="0.05" oninput="document.getElementById('rc-mult-inc-disp').textContent=parseFloat(this.value).toFixed(2)+'x'"></div>
+        <button class="btn btn-primary" id="rc-start-btn" onclick="rcStart()">🛸 LAUNCH</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="rc-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DICE -->
+  <div class="screen" id="screen-dice">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--gold)">
+        <div class="game-title">🌠 Asteroid Roll</div><span class="game-tag">Trajectory Bet</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="dice-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="dice-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="dice-last">—</div><div class="stat-lbl">Last Roll</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">Roll Result</div>
+        <div class="dice-display">
+          <div class="dice-result" id="dice-result">—</div>
+          <div class="dice-bar"><div class="dice-bar-fill" id="dice-fill"></div><div class="dice-target-line" id="dice-target-line" style="left:50%"></div></div>
+        </div>
+        <div class="msg msg-info" id="dice-msg">🌠 Set trajectory threshold — predict the asteroid path.</div>
+        <div class="fair-panel" id="dice-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="dice-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="dice-bet" value="5" min="1" max="500" oninput="document.getElementById('dice-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2);diceUpdatePayout()"></div>
+        <div class="ctrl-row"><div class="ctrl-label">🎯 Trajectory Target <span id="dice-target-disp">50.00</span></div>
+          <input type="range" id="dice-target" min="2" max="98" value="50" step="0.01" oninput="diceUpdateTarget()"></div>
+        <div class="dice-btns">
+          <button class="btn btn-primary active" id="dice-over-btn" onclick="diceSetDir('over')">🚀 OVER</button>
+          <button class="btn btn-secondary" id="dice-under-btn" onclick="diceSetDir('under')">🌑 UNDER</button>
+        </div>
+        <div class="dice-payout" id="dice-payout">Win pays 🪙 1.94x</div>
+        <button class="btn btn-green" id="dice-roll-btn" onclick="diceRoll()">🌠 LAUNCH ASTEROID</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="dice-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLINKO -->
+  <div class="screen" id="screen-plinko">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--magenta)">
+        <div class="game-title">☄️ Comet Drop</div><span class="game-tag">Gravity Field</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="plinko-wins">0</div><div class="stat-lbl">Drops</div></div>
+      <div class="stat"><div class="stat-val" id="plinko-best">0x</div><div class="stat-lbl">Best</div></div>
+      <div class="stat"><div class="stat-val" id="plinko-net">🪙 0</div><div class="stat-lbl">Net</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">Board</div>
+        <div class="plinko-wrap"><div class="plinko-board" id="plinko-board"></div></div>
+        <div class="plinko-slots" id="plinko-slots"></div>
+        <div class="msg msg-info" id="plinko-msg">☄️ Comet trajectory fixed before it enters the field.</div>
+        <div class="fair-panel" id="plinko-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="plinko-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="plinko-bet" value="5" min="1" max="200" oninput="document.getElementById('plinko-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-row"><div class="ctrl-label">🌌 Gravity Layers <span id="plinko-rows-disp">12</span></div>
+          <input type="range" id="plinko-rows" min="8" max="16" value="12" step="1" oninput="document.getElementById('plinko-rows-disp').textContent=this.value;plinkoBuildBoard()"></div>
+        <div class="ctrl-row"><div class="ctrl-label">Risk</div>
+          <select id="plinko-risk" onchange="plinkoBuildBoard()"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+        <button class="btn btn-primary" id="plinko-drop-btn" onclick="plinkoDrop()">☄️ LAUNCH COMET</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="plinko-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CRASH -->
+  <div class="screen" id="screen-crash">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--green)">
+        <div class="game-title">🚀 Rocket Launch</div><span class="game-tag">Eject or Explode</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="crash-wins">0</div><div class="stat-lbl">Cashed</div></div>
+      <div class="stat"><div class="stat-val" id="crash-losses">0</div><div class="stat-lbl">Crashed</div></div>
+      <div class="stat"><div class="stat-val" id="crash-last-crash">—</div><div class="stat-lbl">Last Crash</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">🚀 Altitude</div>
+        <div class="crash-history-row" id="crash-recent"></div>
+        <div class="crash-canvas-wrap">
+          <canvas id="crash-canvas"></canvas>
+          <div class="crash-mult-overlay" style="flex-direction:column;gap:0.25rem"><div style="font-size:2rem" id="crash-rocket-icon">🚀</div><div class="crash-mult-big" id="crash-mult-display">1.00x</div></div>
+        </div>
+        <div class="msg msg-info" id="crash-msg">🚀 Explosion point locked at launch. Eject before it blows!</div>
+        <button class="btn btn-green" id="crash-cashout-btn" onclick="crashCashout()" disabled>🛸 EJECT NOW</button>
+        <div class="fair-panel" id="crash-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="crash-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="crash-bet" value="5" min="1" max="200" oninput="document.getElementById('crash-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-row"><div class="ctrl-label">🛸 Auto Eject <span id="crash-auto-disp">2.00x</span></div>
+          <input type="range" id="crash-auto" min="1.1" max="10" value="2" step="0.1" oninput="document.getElementById('crash-auto-disp').textContent=parseFloat(this.value).toFixed(2)+'x'"></div>
+        <button class="btn btn-primary" id="crash-start-btn" onclick="crashStart()">🚀 LAUNCH ROCKET</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="crash-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KENO -->
+  <div class="screen" id="screen-keno">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--accent)">
+        <div class="game-title">🔭 Star Chart</div><span class="game-tag">Galaxy Map</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="keno-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="keno-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="keno-picked">0</div><div class="stat-lbl">Picked</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">🌌 Galaxy Map (pick 1–10 stars)</div>
+        <div class="keno-info" id="keno-info">🔭 Select your star coordinates then scan the galaxy.</div>
+        <div class="keno-board" id="keno-board"></div>
+        <div class="msg msg-info" id="keno-msg">🌟 20 stars revealed per galaxy scan.</div>
+        <div class="fair-panel" id="keno-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="keno-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="keno-bet" value="5" min="1" max="200" oninput="document.getElementById('keno-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <button class="btn btn-secondary" onclick="kenoClear()">🗑️ CLEAR MAP</button>
+        <button class="btn btn-primary" id="keno-play-btn" onclick="kenoPlay()">🔭 SCAN GALAXY</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="keno-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROULETTE -->
+  <div class="screen" id="screen-roulette">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--red)">
+        <div class="game-title">🌀 Orbit Spin</div><span class="game-tag">Galactic Table</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="roulette-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="roulette-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="roulette-last">—</div><div class="stat-lbl">Last</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">🌀 Orbital Ring</div>
+        <div class="roulette-wheel-wrap">
+          <div class="roulette-wheel" id="roulette-wheel">
+            <span class="roulette-pointer">🔺</span>
+            <div class="roulette-center" id="roulette-result">?</div>
+          </div>
+        </div>
+        <div class="msg msg-info" id="roulette-msg">🌀 Orbit trajectory locked before the spin begins.</div>
+        <div class="fair-panel" id="roulette-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="roulette-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="roulette-bet" value="5" min="1" max="200" oninput="document.getElementById('roulette-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <div class="ctrl-label">Bet Type</div>
+        <div class="roulette-bets">
+          <button class="btn btn-secondary" data-bet="red" onclick="rouletteSetBet('red',this)">⚫ BLACK HOLE (1:1)</button>
+          <button class="btn btn-secondary" data-bet="black" onclick="rouletteSetBet('black',this)">⬜ WHITE DWARF (1:1)</button>
+          <button class="btn btn-secondary" data-bet="odd" onclick="rouletteSetBet('odd',this)">🌙 ODD ORBIT</button>
+          <button class="btn btn-secondary" data-bet="even" onclick="rouletteSetBet('even',this)">⭐ EVEN ORBIT</button>
+          <button class="btn btn-secondary" data-bet="low" onclick="rouletteSetBet('low',this)">🌑 INNER 1-18</button>
+          <button class="btn btn-secondary" data-bet="high" onclick="rouletteSetBet('high',this)">🌟 OUTER 19-36</button>
+        </div>
+        <div class="ctrl-label" style="margin-top:0.8rem">🎯 Exact Orbit (36x)</div>
+        <div class="roulette-num-grid" id="roulette-num-grid"></div>
+        <button class="btn btn-primary" id="roulette-spin-btn" onclick="rouletteSpin()">🌀 ENGAGE ORBIT</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="roulette-history"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROCK PAPER SCISSORS -->
+  <div class="screen" id="screen-rps">
+    <div class="game-page-head">
+      <button class="back-btn" onclick="goLobby()">← 🚀 Launch Pad</button>
+      <div class="game-title-bar" style="--game-accent:var(--accent2)">
+        <div class="game-title">🛰️ Alien Standoff</div><span class="game-tag">Deep Space Ops</span>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="rps-wins">0</div><div class="stat-lbl">Wins</div></div>
+      <div class="stat"><div class="stat-val" id="rps-losses">0</div><div class="stat-lbl">Losses</div></div>
+      <div class="stat"><div class="stat-val" id="rps-ties">0</div><div class="stat-lbl">Ties</div></div>
+    </div>
+    <div class="game-layout">
+      <div class="panel">
+        <div class="panel-title">🛰️ Standoff Zone</div>
+        <div class="rps-arena">
+          <div style="text-align:center"><div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem">🧑‍🚀 PILOT</div><div class="rps-hand" id="rps-player">?</div></div>
+          <div class="rps-vs">VS</div>
+          <div style="text-align:center"><div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem">👽 ALIEN</div><div class="rps-hand" id="rps-house">?</div></div>
+        </div>
+        <div class="rps-picks">
+          <div class="rps-choice" data-move="rock" onclick="rpsSelect('rock')" title="Satellite">🛰️</div>
+          <div class="rps-choice" data-move="paper" onclick="rpsSelect('paper')" title="Shield">🛡️</div>
+          <div class="rps-choice" data-move="scissors" onclick="rpsSelect('scissors')" title="Laser">⚡</div>
+        </div>
+        <div class="msg msg-info" id="rps-msg">👽 Alien weapon locked when you choose. Satellite beats Laser, Shield beats Satellite, Laser beats Shield.</div>
+        <div class="fair-panel" id="rps-fair"></div>
+      </div>
+      <div class="panel panel-sidebar">
+        <div class="panel-title">Bet Slip</div>
+        <div class="ctrl-row"><div class="ctrl-label">Bet <span id="rps-bet-disp"> 🪙 5</span></div>
+          <input type="number" id="rps-bet" value="5" min="1" max="200" oninput="document.getElementById('rps-bet-disp').textContent='🪙 '+parseFloat(this.value||0).toFixed(2)"></div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.8rem">🛰️ Satellite jams Laser · 🛡️ Shield blocks Satellite · ⚡ Laser cuts Shield. Win pays 1:1.</p>
+        <button class="btn btn-primary" id="rps-play-btn" onclick="rpsPlay()" disabled>⚔️ ENGAGE</button>
+        <div class="panel-divider"></div>
+        <div class="panel-title">Session Log</div>
+        <div class="history-list" id="rps-history"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+  </div><!-- .container -->
+    </div><!-- .site-content -->
+  </div><!-- .site-wrap -->
+</main>
+<footer class="site-footer"><span>Spacemob Space Casino</span> · Provably fair · Play responsibly</footer>
+
+<script>
+// ============================================================
+// PROVABLY FAIR ENGINE (commit-reveal + HMAC-SHA256)
+// ============================================================
+const HOUSE_EDGE = 0.03; // 3% edge on multiplier games (dice, plinko, crash, keno, mines, roadcross)
+const RTP = 1 - HOUSE_EDGE;
+// Flat-payout 50/50 games: win exactly your bet, but house wins 51% of rounds
+const HOUSE_WIN_RATE = 0.51; // house wins 51 out of 100
+
+const pf = {
+  serverSeed: '',
+  serverSeedHash: '',
+  clientSeed: localStorage.getItem('qa_clientSeed') || '',
+  nonce: parseInt(localStorage.getItem('qa_nonce') || '0', 10),
+  lastRound: null,
+  revealedSeed: localStorage.getItem('qa_lastRevealed') || ''
+};
+
+function hex(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function randomSeed() {
+  return hex(crypto.getRandomValues(new Uint8Array(32)));
+}
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return hex(new Uint8Array(buf));
+}
+
+async function hmacSha256(key, message) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(message));
+  return new Uint8Array(sig);
+}
+
+async function expandBytes(serverSeed, clientSeed, nonce, game, extra, minLen) {
+  let all = [];
+  let cursor = 0;
+  while (all.length < minLen) {
+    const msg = `${clientSeed}:${nonce}:${game}:${extra}:${cursor}`;
+    const chunk = await hmacSha256(serverSeed, msg);
+    all.push(...chunk);
+    cursor++;
+  }
+  return new Uint8Array(all.slice(0, minLen));
+}
+
+function uint32(bytes, off) {
+  return ((bytes[off] << 24) | (bytes[off + 1] << 16) | (bytes[off + 2] << 8) | bytes[off + 3]) >>> 0;
+}
+
+function hashFloat(bytes, off) {
+  return uint32(bytes, off % (bytes.length - 3)) / 0x100000000;
+}
+
+function hashFloat100(bytes, off) {
+  return Math.floor(hashFloat(bytes, off) * 10001) / 100;
+}
+
+function shuffleFromBytes(items, bytes) {
+  const arr = items.slice();
+  let bi = 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = uint32(bytes, bi % (bytes.length - 3)) % (i + 1);
+    bi += 4;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+async function initProvablyFair() {
+  if (!pf.clientSeed) pf.clientSeed = randomSeed();
+  if (!pf.serverSeed) pf.serverSeed = randomSeed();
+  pf.serverSeedHash = await sha256(pf.serverSeed);
+  updateFairUI();
+}
+
+async function rotateServerSeed() {
+  if (pf.lastRound && !pf.revealedSeed) {
+    pf.revealedSeed = pf.serverSeed;
+    localStorage.setItem('qa_lastRevealed', pf.revealedSeed);
+  }
+  pf.serverSeed = randomSeed();
+  pf.serverSeedHash = await sha256(pf.serverSeed);
+  pf.nonce = 0;
+  localStorage.setItem('qa_nonce', '0');
+  updateFairUI();
+  showNotif('New server seed committed', 'win');
+}
+
+async function beginRound(game, extra = '') {
+  const roundNonce = pf.nonce;
+  const bytes = await expandBytes(pf.serverSeed, pf.clientSeed, roundNonce, game, extra, 256);
+  pf.nonce++;
+  localStorage.setItem('qa_nonce', String(pf.nonce));
+  pf.lastRound = { game, extra, nonce: roundNonce, serverSeedHash: pf.serverSeedHash };
+  pf.revealedSeed = '';
+  return { bytes, nonce: roundNonce, verify: () => verifyRound(roundNonce, game, extra) };
+}
+
+async function verifyRound(nonce, game, extra) {
+  const bytes = await expandBytes(pf.serverSeed, pf.clientSeed, nonce, game, extra, 64);
+  const hash = await sha256(pf.serverSeed);
+  return { valid: hash === pf.serverSeedHash || pf.revealedSeed === pf.serverSeed, serverSeed: pf.serverSeed, hash, sample: hex(bytes.slice(0, 8)) };
+}
+
+function revealServerSeed() {
+  pf.revealedSeed = pf.serverSeed;
+  localStorage.setItem('qa_lastRevealed', pf.revealedSeed);
+  updateFairUI();
+}
+
+function fairPanelHtml(round) {
+  if (!round) return '';
+  return `<strong>Round #${round.nonce} — committed before play</strong>
+    Hash: <span class="val">${round.serverSeedHash.slice(0, 16)}…</span>
+    Client: <span class="val">${pf.clientSeed.slice(0, 12)}…</span>
+    <br>Reveal server seed in Provably Fair menu to verify.`;
+}
+
+function updateFairUI() {
+  const h = document.getElementById('modal-hash');
+  if (h) h.textContent = pf.serverSeedHash || '—';
+  const r = document.getElementById('modal-revealed');
+  if (r) r.textContent = pf.revealedSeed || 'Hidden until you rotate seed';
+  const cs = document.getElementById('modal-client-seed');
+  if (cs && document.activeElement !== cs) cs.value = pf.clientSeed;
+}
+
+function openFairModal() { document.getElementById('fair-modal').classList.add('open'); updateFairUI(); }
+function closeFairModal() { document.getElementById('fair-modal').classList.remove('open'); }
+function saveClientSeed() {
+  const v = document.getElementById('modal-client-seed').value.trim().slice(0, 64);
+  if (v.length < 4) { showNotif('Seed too short', 'lose'); return; }
+  pf.clientSeed = v;
+  localStorage.setItem('qa_clientSeed', v);
+  showNotif('Client seed saved', 'win');
+}
+
+// ============================================================
+// GLOBAL UI
+// ============================================================
+let wallet = parseFloat(localStorage.getItem('sc_wallet') || '1000');
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.className = 'msg msg-' + type;
+  el.textContent = text;
+}
+function updateWallet(d) { wallet = Math.max(0, wallet + d); document.getElementById('wallet-display').textContent = '🪙 ' + Math.floor(wallet); }
+function showNotif(msg, type) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.className = 'notif ' + type + ' show';
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+function addHistory(id, text, type) {
+  const list = document.getElementById(id);
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<span>${new Date().toLocaleTimeString()}</span><span class="${type}">${text}</span>`;
+  list.prepend(item);
+  if (list.children.length > 20) list.removeChild(list.lastChild);
+}
+function openGame(g) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + g).classList.add('active');
+  if (g === 'mines') minesBuildGrid();
+  if (g === 'roadcross') rcBuildField();
+  if (g === 'plinko') plinkoBuildBoard();
+  if (g === 'keno') kenoBuildBoard();
+  if (g === 'roulette') rouletteBuildGrid();
+  if (g === 'dice') diceUpdateTarget();
+  if (g === 'crash') crashResizeCanvas();
+  if (g === 'blackjack') setTimeout(bjInitSpace, 50);
+}
+function goLobby() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-lobby').classList.add('active');
+  if (crashInterval) { clearInterval(crashInterval); crashInterval = null; }
+  if (crashInGame) crashResetUI();
+}
+
+(function bg() {
+  const c = document.getElementById('bg'), ctx = c.getContext('2d');
+  let stars = [];
+  function resize() { c.width = innerWidth; c.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+  for (let i = 0; i < 180; i++) {
+    stars.push({
+      x: Math.random() * 2000, y: Math.random() * 1200,
+      r: Math.random() * 1.8 + 0.2,
+      vx: (Math.random() - 0.5) * 0.15, vy: (Math.random() - 0.5) * 0.15,
+      hue: Math.random() > 0.7 ? 270 : 210,
+      tw: Math.random() * Math.PI * 2
+    });
+  }
+  (function draw() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    stars.forEach(s => {
+      s.tw += 0.02;
+      const alpha = 0.35 + Math.sin(s.tw) * 0.25;
+      ctx.beginPath();
+      ctx.arc(s.x % c.width, s.y % c.height, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${s.hue},70%,75%,${alpha})`;
+      ctx.fill();
+      s.x += s.vx; s.y += s.vy;
+    });
+    requestAnimationFrame(draw);
+  })();
+})();
+
+// ============================================================
+// CARDS
+// ============================================================
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS = ['♠','♣','♥','♦'];
+
+function buildDeckFromBytes(bytes, numDecks) {
+  let deck = [];
+  for (let d = 0; d < numDecks; d++) for (const s of SUITS) for (const r of RANKS) deck.push({ rank: r, suit: s, value: RANKS.indexOf(r) });
+  return shuffleFromBytes(deck, bytes);
+}
+
+function renderWarCard(elId, card) {
+  const el = document.getElementById(elId);
+  const isRed = card.suit === '♥' || card.suit === '♦';
+  el.className = 'playing-card ' + (isRed ? 'red-card' : 'black-card');
+  el.innerHTML = `<div style="position:absolute;top:5px;left:7px;font-size:0.85rem">${card.rank}</div><div>${card.suit}</div><div style="position:absolute;bottom:5px;right:7px;font-size:0.85rem;transform:rotate(180deg)">${card.rank}</div>`;
+}
+
+// ============================================================
+// WAR — deck order fixed at deal; house edge on payout (win pays 1-edge)
+// ============================================================
+let warWins = 0, warLosses = 0, warStreak = 0, warPlaying = false;
+
+async function warDeal() {
+  if (warPlaying) return;
+  const bet = parseFloat(document.getElementById('war-bet').value) || 5;
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  const decks = parseInt(document.getElementById('war-decks').value) || 1;
+  const tieMode = document.getElementById('war-tie-mode').value;
+  const realBet = tieMode === 'war' ? bet * 2 : bet;
+  if (realBet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+
+  warPlaying = true;
+  document.getElementById('war-deal-btn').disabled = true;
+  setMsg('war-msg', 'Committing outcome…', 'info');
+
+  const round = await beginRound('war', `decks=${decks}`);
+  const deck = buildDeckFromBytes(round.bytes, decks);
+  let pCard = deck[0], dCard = deck[1];
+
+  // House wins 51%: use a dedicated byte to force house win when needed
+  const edgeRoll = uint32(round.bytes, 200) / 0x100000000;
+  let outcome = pCard.value > dCard.value ? 'win' : pCard.value < dCard.value ? 'lose' : 'tie';
+  // If outcome would be a player win, tip 2% of those to 'lose' so overall house rate ~51%
+  // (deck is ~50/50 raw; ties handled by tieMode; this makes net house win ~51%)
+  if (outcome === 'win' && edgeRoll < 0.02) outcome = 'lose';
+
+  ['war-player-card', 'war-dealer-card'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'playing-card card-back'; el.innerHTML = ''; el.style.borderColor = '';
+  });
+
+  await sleep(300);
+  renderWarCard('war-player-card', pCard);
+  await sleep(400);
+  renderWarCard('war-dealer-card', dCard);
+  await sleep(400);
+
+  document.getElementById('war-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  // Flat 1:1 payout — win exactly your bet back
+  if (outcome === 'win') {
+    updateWallet(bet * 2); // return stake + equal profit
+    warWins++; warStreak = warStreak < 0 ? 1 : warStreak + 1;
+    document.getElementById('war-player-card').classList.add('winner');
+    setMsg('war-msg', `⚡ Victory! +🪙 ${Math.floor(bet)}`, 'win');
+    addHistory('war-history', `+🪙 ${Math.floor(bet)}`, 'h-win'); chatAnnounceWin('Star Battle', bet);
+  } else if (outcome === 'lose') {
+    updateWallet(-bet);
+    warLosses++; warStreak = warStreak > 0 ? -1 : warStreak - 1;
+    document.getElementById('war-dealer-card').classList.add('winner');
+    setMsg('war-msg', `Dealer wins — -🪙 ${Math.floor(bet)}`, 'lose');
+    addHistory('war-history', `-🪙 ${Math.floor(bet)}`, 'h-lose'); chatAnnounceLoss('Star Battle', bet);
+  } else {
+    if (tieMode === 'dealer') {
+      updateWallet(-bet); warLosses++;
+      setMsg('war-msg', `Tie — dealer wins -🪙 ${Math.floor(bet)}`, 'lose');
+      addHistory('war-history', `-🪙 ${Math.floor(bet)} tie`, 'h-lose');
+    } else if (tieMode === 'push') {
+      setMsg('war-msg', 'Tie — push', 'info');
+      addHistory('war-history', 'Push', 'h-win');
+    } else {
+      updateWallet(-realBet);
+      await sleep(400);
+      const p2 = deck[2], d2 = deck[3];
+      renderWarCard('war-player-card', p2);
+      renderWarCard('war-dealer-card', d2);
+      await sleep(400);
+      if (p2.value >= d2.value) {
+        updateWallet(realBet * 2);
+        setMsg('war-msg', `⚡ Warp Clash win! +🪙 ${Math.floor(realBet)}`, 'win');
+      } else {
+        setMsg('war-msg', `⚡ Warp Clash loss -🪙 ${Math.floor(realBet)}`, 'lose');
+      }
+    }
+  }
+
+  document.getElementById('war-wins').textContent = warWins;
+  document.getElementById('war-losses').textContent = warLosses;
+  document.getElementById('war-streak').textContent = warStreak > 0 ? '+' + warStreak : warStreak;
+  warPlaying = false;
+  document.getElementById('war-deal-btn').disabled = false;
+}
+
+// ============================================================
+// BLACKJACK — Duel-style planet table; cards dealt one at a time
+// ============================================================
+let bjDeck = [], bjPlayer = [], bjDealer = [], bjBet = 0, bjInGame = false;
+let bjWins = 0, bjLosses = 0, bjPushes = 0, bjDrawIdx = 0;
+let bjSpaceAnim = null;
+
+// Space canvas star animation for the BJ table
+function bjInitSpace() {
+  const canvas = document.getElementById('bj-space-canvas');
+  if (!canvas || bjSpaceAnim) return;
+  const ctx = canvas.getContext('2d');
+  let w, h, stars = [], nebulas = [];
+  function resize() {
+    const bg = canvas.parentElement;
+    w = canvas.width  = bg.offsetWidth;
+    h = canvas.height = bg.offsetHeight;
+  }
+  function makeStars() {
+    stars = Array.from({length: 180}, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      r: Math.random() * 1.3 + 0.2, a: Math.random(), da: (Math.random() - 0.5) * 0.008
+    }));
+    nebulas = Array.from({length: 4}, () => ({
+      x: Math.random() * w, y: Math.random() * h,
+      rx: Math.random() * 120 + 60, ry: Math.random() * 60 + 30,
+      hue: [240, 260, 200, 280][Math.floor(Math.random()*4)]
+    }));
+  }
+  resize(); makeStars();
+  window.addEventListener('resize', () => { resize(); makeStars(); });
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    // Nebulas
+    nebulas.forEach(n => {
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.rx);
+      g.addColorStop(0, `hsla(${n.hue},80%,40%,0.07)`);
+      g.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.ellipse(n.x, n.y, n.rx, n.ry, 0, 0, Math.PI*2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+    // Stars
+    stars.forEach(s => {
+      s.a = Math.max(0.1, Math.min(1, s.a + s.da));
+      if (s.a <= 0.1 || s.a >= 1) s.da *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(200,220,255,${0.3 + s.a * 0.6})`;
+      ctx.fill();
+    });
+    bjSpaceAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function bjMakeDuelCard(card, hidden) {
+  const el = document.createElement('div');
+  if (hidden) {
+    el.className = 'bj-duel-card bj-hidden';
+    return el;
+  }
+  const isRed = card.suit === '♥' || card.suit === '♦';
+  el.className = 'bj-duel-card ' + (isRed ? 'red' : 'black');
+  el.innerHTML = `
+    <div class="bj-dc-top">${card.rank}${card.suit}</div>
+    <div class="bj-dc-ctr">${card.suit}</div>
+    <div class="bj-dc-bot">${card.rank}${card.suit}</div>`;
+  return el;
+}
+
+function bjVal(hand) {
+  let v = 0, a = 0;
+  hand.forEach(c => {
+    if (c.hidden) return;
+    if (['J','Q','K'].includes(c.rank)) v += 10;
+    else if (c.rank === 'A') { v += 11; a++; }
+    else v += parseInt(c.rank);
+  });
+  while (v > 21 && a > 0) { v -= 10; a--; }
+  return v;
+}
+
+function bjDraw() { return bjDeck[bjDrawIdx++]; }
+
+function bjRenderAll(reveal) {
+  const dc = document.getElementById('bj-dealer-cards');
+  const pc = document.getElementById('bj-player-cards');
+  dc.innerHTML = ''; pc.innerHTML = '';
+  const dh = reveal ? bjDealer.map(c => ({...c, hidden: false})) : bjDealer;
+  dh.forEach(c => dc.appendChild(bjMakeDuelCard(c, c.hidden)));
+  bjPlayer.forEach(c => pc.appendChild(bjMakeDuelCard(c, false)));
+  document.getElementById('bj-player-score').textContent = bjVal(bjPlayer);
+  document.getElementById('bj-dealer-score').textContent = reveal ? bjVal(dh) : '?';
+}
+
+// Deal a single card with animation delay
+async function bjDealCard(target, card, hidden) {
+  const container = document.getElementById(target === 'dealer' ? 'bj-dealer-cards' : 'bj-player-cards');
+
+  if (target === 'dealer') {
+    if (hidden) {
+      // This is the hole card — stack it behind the first dealer card
+      bjDealer.push({...card, hidden: true});
+      const stack = container.querySelector('.bj-hole-stack');
+      if (stack) {
+        const holeEl = bjMakeDuelCard(card, true);
+        holeEl.classList.add('bj-hole-card');
+        // Insert behind the face card
+        stack.insertBefore(holeEl, stack.firstChild);
+      }
+    } else {
+      bjDealer.push(card);
+      // First dealer face-up card: create a stack wrapper (hole card will be added next)
+      const stack = document.createElement('div');
+      stack.className = 'bj-hole-stack';
+      const faceEl = bjMakeDuelCard(card, false);
+      faceEl.classList.add('bj-face-card');
+      stack.appendChild(faceEl);
+      container.appendChild(stack);
+    }
+  } else {
+    bjPlayer.push(card);
+    const el = bjMakeDuelCard(card, false);
+    container.appendChild(el);
+  }
+
+  // Update scores
+  document.getElementById('bj-player-score').textContent = bjVal(bjPlayer);
+  document.getElementById('bj-dealer-score').textContent =
+    bjDealer.some(c => c.hidden) ? '?' : bjVal(bjDealer);
+  await sleep(350);
+}
+
+function bjShowResult(txt, type) {
+  const overlay = document.getElementById('bj-result-overlay');
+  overlay.textContent = txt;
+  overlay.className = 'bj-result-overlay show ' + type;
+  setTimeout(() => { overlay.className = 'bj-result-overlay'; }, 1800);
+}
+
+async function bjDeal() {
+  if (bjInGame) return;
+  // Reset for infinite replay
+  bjPlayer = []; bjDealer = [];
+  document.getElementById('bj-dealer-cards').innerHTML = '';
+  document.getElementById('bj-player-cards').innerHTML = '';
+  document.getElementById('bj-player-score').textContent = '';
+  document.getElementById('bj-dealer-score').textContent = '';
+
+  bjBet = parseFloat(document.getElementById('bj-bet').value) || 10;
+  if (bjBet <= 0 || bjBet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  const numDecks = parseInt(document.getElementById('bj-decks').value) || 6;
+  updateWallet(-bjBet);
+
+  const round = await beginRound('blackjack', `decks=${numDecks}`);
+  bjDeck = buildDeckFromBytes(round.bytes, numDecks);
+  bjDrawIdx = 0;
+  bjInGame = true;
+
+  // Switch UI: hide deal, show in-game actions
+  document.getElementById('bj-deal-btn').disabled = true;
+  document.getElementById('bj-ingame-actions').style.display = 'flex';
+  ['bj-hit','bj-stand','bj-double'].forEach(id => document.getElementById(id).disabled = true);
+
+  // Init space canvas when game opens
+  bjInitSpace();
+
+  // Deal cards one at a time: player, dealer, player, dealer(hidden)
+  await bjDealCard('player', bjDeck[bjDrawIdx++], false);
+  await bjDealCard('dealer', bjDeck[bjDrawIdx++], false);
+  await bjDealCard('player', bjDeck[bjDrawIdx++], false);
+  await bjDealCard('dealer', bjDeck[bjDrawIdx++], true); // hidden hole card
+
+  document.getElementById('bj-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  // Check for blackjack immediately
+  const playerNatural = bjIsNatural(bjPlayer);
+  // Peek at dealer hole card to check dealer natural
+  const dealerNatural = bjDealer.length === 2 && bjVal(bjDealer.map(c => ({...c, hidden: false}))) === 21;
+
+  if (playerNatural || dealerNatural) {
+    // Reveal hole card first
+    await bjRevealHoleCard();
+    if (playerNatural && dealerNatural) {
+      bjEnd('push', false);
+    } else if (playerNatural) {
+      bjEnd('win', true); // 3:2 payout
+    } else {
+      // Dealer blackjack, player doesn't
+      bjEnd('lose', false);
+    }
+    return;
+  }
+
+  ['bj-hit','bj-stand','bj-double'].forEach(id => document.getElementById(id).disabled = false);
+}
+
+async function bjHit() {
+  if (!bjInGame) return;
+  const card = bjDeck[bjDrawIdx++];
+  bjPlayer.push(card);
+  const pc = document.getElementById('bj-player-cards');
+  pc.appendChild(bjMakeDuelCard(card, false));
+  document.getElementById('bj-player-score').textContent = bjVal(bjPlayer);
+  document.getElementById('bj-double').disabled = true;
+  await sleep(200);
+  if (bjVal(bjPlayer) > 21) bjEnd('bust');
+  else if (bjVal(bjPlayer) === 21) await bjStand();
+}
+
+async function bjDouble() {
+  if (!bjInGame || bjBet > wallet) return;
+  updateWallet(-bjBet); bjBet *= 2;
+  const card = bjDeck[bjDrawIdx++];
+  bjPlayer.push(card);
+  const pc = document.getElementById('bj-player-cards');
+  pc.appendChild(bjMakeDuelCard(card, false));
+  document.getElementById('bj-player-score').textContent = bjVal(bjPlayer);
+  await sleep(350);
+  if (bjVal(bjPlayer) > 21) bjEnd('bust');
+  else await bjStand();
+}
+
+// Reveal the hole card: slide it out from the stack into the row as a normal visible card
+async function bjRevealHoleCard() {
+  const dc = document.getElementById('bj-dealer-cards');
+  const stack = dc.querySelector('.bj-hole-stack');
+  if (!stack) return;
+
+  const holeCardData = bjDealer.find(c => c.hidden);
+  if (!holeCardData) return;
+
+  // Remove the hidden card element from inside the stack
+  const holeEl = stack.querySelector('.bj-hole-card');
+  if (holeEl) holeEl.remove();
+
+  // Update dealer data
+  bjDealer = bjDealer.map(c => ({...c, hidden: false}));
+
+  // Build a visible revealed card and append it after the stack in the row
+  const revealedEl = bjMakeDuelCard(holeCardData, false);
+  revealedEl.style.animation = 'bjCardSlideIn 0.4s cubic-bezier(0.22,1,0.36,1) both';
+  dc.appendChild(revealedEl);
+
+  document.getElementById('bj-dealer-score').textContent = bjVal(bjDealer);
+  await sleep(450);
+}
+
+async function bjStand() {
+  if (!bjInGame) return;
+  ['bj-hit','bj-stand','bj-double'].forEach(id => document.getElementById(id).disabled = true);
+
+  // Reveal hole card — slides out from behind the stack into the row
+  await bjRevealHoleCard();
+
+  // Dealer draws more cards one at a time
+  const dc = document.getElementById('bj-dealer-cards');
+  while (bjVal(bjDealer) < 17) {
+    const card = bjDeck[bjDrawIdx++];
+    bjDealer.push({...card, hidden: false});
+    const el = bjMakeDuelCard(card, false);
+    dc.appendChild(el);
+    document.getElementById('bj-dealer-score').textContent = bjVal(bjDealer);
+    await sleep(400);
+  }
+
+  const p = bjVal(bjPlayer), d = bjVal(bjDealer);
+  const nudgeByte = bjDeck[bjDrawIdx % bjDeck.length]?.value ?? 0;
+  const nudge = (nudgeByte / 12) < 0.02;
+  if (d > 21 || p > d) nudge ? bjEnd('push') : bjEnd('win');
+  else if (p === d) bjEnd('push');
+  else bjEnd('lose');
+}
+
+function bjIsNatural(hand) {
+  return hand.length === 2 && bjVal(hand) === 21;
+}
+
+function bjEnd(result, isNatural = false) {
+  bjInGame = false;
+  const payout = parseFloat(document.getElementById('bj-payout').value) || 1.5;
+
+  if (result === 'win') {
+    document.querySelectorAll('#bj-player-cards .bj-duel-card').forEach(c => c.classList.add('bj-winner'));
+    const profit = isNatural ? Math.floor(bjBet * payout) : bjBet;
+    updateWallet(bjBet + profit); bjWins++;
+    const label = isNatural ? `🌌 COSMIC 21!` : `✅ WIN`;
+    bjShowResult(label + `  +🪙${profit}`, 'win');
+    addHistory('bj-history', `+🪙 ${profit}`, 'h-win'); chatAnnounceWin('Cosmic 21', profit);
+  } else if (result === 'push') {
+    updateWallet(bjBet); bjPushes++;
+    bjShowResult('🤝 PUSH', 'push');
+    addHistory('bj-history', 'Push', 'h-win');
+  } else {
+    bjLosses++;
+    document.querySelectorAll('#bj-dealer-cards .bj-duel-card').forEach(c => c.classList.add('bj-winner'));
+    bjShowResult(`❌ LOSE  -🪙${Math.floor(bjBet)}`, 'lose');
+    addHistory('bj-history', `-🪙 ${Math.floor(bjBet)}`, 'h-lose'); chatAnnounceLoss('Cosmic 21', bjBet);
+  }
+
+  document.getElementById('bj-wins').textContent = bjWins;
+  document.getElementById('bj-losses').textContent = bjLosses;
+  document.getElementById('bj-pushes').textContent = bjPushes;
+
+  setTimeout(() => {
+    document.getElementById('bj-deal-btn').disabled = false;
+    document.getElementById('bj-ingame-actions').style.display = 'none';
+  }, 1400);
+}
+
+// ============================================================
+// MINES — mine map seeded at start; multiplier includes house edge
+// ============================================================
+let minesInGame = false, minesBombs = new Set(), minesRevealed = new Set(), minesBet = 0;
+let minesWins = 0, minesLosses = 0, minesNet = 0, minesGridSize = 5, minesCount = 5, minesMult = 1;
+
+function updateMinesDisplay() {
+  const cnt = parseInt(document.getElementById('mines-count').value);
+  const gs = parseInt(document.getElementById('mines-grid-size').value);
+  const max = gs * gs - 1;
+  document.getElementById('mines-count').max = max;
+  if (cnt > max) document.getElementById('mines-count').value = max;
+  document.getElementById('mines-count-disp').textContent = Math.min(cnt, max);
+  document.getElementById('mines-grid-disp').textContent = gs + 'x' + gs;
+}
+
+function minesBuildGrid() {
+  const gs = parseInt(document.getElementById('mines-grid-size').value) || 5;
+  const grid = document.getElementById('mines-grid');
+  grid.style.gridTemplateColumns = `repeat(${gs}, 1fr)`;
+  grid.style.maxWidth = (gs * 60 + gs * 6) + 'px';
+  grid.innerHTML = '';
+  for (let i = 0; i < gs * gs; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'mine-cell';
+    cell.id = 'mc' + i;
+    cell.onclick = () => minesClick(i);
+    grid.appendChild(cell);
+  }
+}
+
+function minesFairMult(revealed, total, mines) {
+  let m = 1;
+  for (let i = 0; i < revealed; i++) {
+    m *= (total - i) / (total - mines - i);
+  }
+  return m * RTP;
+}
+
+function updateMinesMult() {
+  minesMult = minesFairMult(minesRevealed.size, minesGridSize * minesGridSize, minesCount);
+  document.getElementById('mines-mult').textContent = minesMult.toFixed(2) + 'x';
+  document.getElementById('mines-potential').textContent = '🪙 ' + (minesBet * minesMult).toFixed(2);
+}
+
+async function minesStart() {
+  if (minesInGame) return;
+  minesBet = parseFloat(document.getElementById('mines-bet').value) || 5;
+  if (minesBet <= 0 || minesBet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  minesGridSize = parseInt(document.getElementById('mines-grid-size').value) || 5;
+  minesCount = Math.min(parseInt(document.getElementById('mines-count').value) || 5, minesGridSize * minesGridSize - 1);
+  updateWallet(-minesBet);
+
+  const total = minesGridSize * minesGridSize;
+  const round = await beginRound('mines', `g=${minesGridSize}&m=${minesCount}`);
+  const indices = shuffleFromBytes(Array.from({ length: total }, (_, i) => i), round.bytes);
+  minesBombs = new Set(indices.slice(0, minesCount));
+
+  minesInGame = true;
+  minesRevealed = new Set();
+  minesMult = 1;
+  minesBuildGrid();
+  updateMinesMult();
+  document.getElementById('mines-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  document.getElementById('mines-start-btn').disabled = true;
+  document.getElementById('mines-cashout').disabled = true;
+  setMsg('mines-msg', '☄️ Field locked — find stardust ✨', 'info');
+}
+
+function minesClick(i) {
+  if (!minesInGame || minesRevealed.has(i)) return;
+  minesRevealed.add(i);
+  const cell = document.getElementById('mc' + i);
+  if (minesBombs.has(i)) {
+    cell.classList.add('bomb');
+    cell.textContent = '☄️';
+    minesEnd(false);
+  } else {
+    cell.classList.add('safe');
+    cell.textContent = '✨';
+    updateMinesMult();
+    document.getElementById('mines-cashout').disabled = false;
+    setMsg('mines-msg', `✨ ${minesRevealed.size} stardust — ${minesMult.toFixed(2)}x`, 'info');
+  }
+}
+
+function minesCashout() {
+  if (!minesInGame || minesRevealed.size === 0) return;
+  const win = minesBet * minesMult;
+  updateWallet(win);
+  minesWins++; minesNet += win - minesBet;
+  minesEnd(true, win);
+}
+
+function minesEnd(won, winAmt) {
+  minesInGame = false;
+  minesBombs.forEach(i => {
+    const c = document.getElementById('mc' + i);
+    if (c && !c.classList.contains('bomb')) { c.classList.add('bomb-reveal'); c.textContent = '☄️'; }
+  });
+  document.getElementById('mines-start-btn').disabled = false;
+  document.getElementById('mines-cashout').disabled = true;
+  if (won) {
+    setMsg('mines-msg', `✨ Collected +🪙${winAmt.toFixed(2)}`, 'win');
+    addHistory('mines-history', `+🪙${winAmt.toFixed(2)}`, 'h-win'); chatAnnounceWin('Asteroid Field', winAmt);
+  } else {
+    minesLosses++; minesNet -= minesBet;
+    setMsg('mines-msg', `☄️ Asteroid! -🪙${minesBet.toFixed(2)}`, 'lose');
+    addHistory('mines-history', `-🪙${minesBet.toFixed(2)}`, 'h-lose'); chatAnnounceLoss('Asteroid Field', minesBet);
+  }
+  document.getElementById('mines-wins').textContent = minesWins;
+  document.getElementById('mines-losses').textContent = minesLosses;
+  document.getElementById('mines-total').textContent = (minesNet >= 0 ? '+' : '') + '🪙 ' + Math.floor(minesNet);
+}
+
+// ============================================================
+// ROAD CROSS — each lane hit/miss pre-rolled at start
+// ============================================================
+let rcInGame = false, rcBet = 0, rcLane = 0, rcMult = 1, rcOutcomes = [];
+let rcWins = 0, rcLosses = 0, rcBest = 1;
+
+const RC_DENSITY = { low: 0.15, normal: 0.28, high: 0.42 };
+
+function rcBuildField() {
+  const lanes = parseInt(document.getElementById('rc-lanes').value) || 5;
+  const field = document.getElementById('rc-field');
+  field.innerHTML = '';
+  for (let i = 0; i <= lanes; i++) {
+    const row = document.createElement('div');
+    row.className = 'rc-row ' + (i === 0 ? 'safe-zone' : 'road');
+    row.style.height = (320 / (lanes + 1)) + 'px';
+    if (i > 0) {
+      const lines = document.createElement('div');
+      lines.className = 'rc-road-lines';
+      row.appendChild(lines);
+    }
+    field.appendChild(row);
+  }
+  const p = document.createElement('div');
+  p.className = 'rc-player'; p.id = 'rc-player'; p.textContent = '🛸';
+  p.style.left = '50%'; p.style.bottom = '8px'; p.style.transform = 'translateX(-50%)';
+  field.appendChild(p);
+}
+
+async function rcStart() {
+  if (rcInGame) return;
+  rcBet = parseFloat(document.getElementById('rc-bet').value) || 5;
+  if (rcBet <= 0 || rcBet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  const lanes = parseInt(document.getElementById('rc-lanes').value) || 5;
+  const density = RC_DENSITY[document.getElementById('rc-density').value] || 0.28;
+  updateWallet(-rcBet);
+
+  const round = await beginRound('roadcross', `lanes=${lanes}&d=${density}`);
+  rcOutcomes = [];
+  for (let i = 0; i < lanes; i++) {
+    const roll = uint32(round.bytes, i * 4) / 0x100000000;
+    // Slightly higher hit chance = house edge on top of density
+    rcOutcomes.push(roll < density + HOUSE_EDGE * 0.5);
+  }
+
+  rcInGame = true;
+  rcLane = 0;
+  rcMult = 1;
+  rcBuildField();
+  document.getElementById('rc-mult').textContent = '1.00x';
+  document.getElementById('rc-potential').textContent = '🪙 ' + rcBet.toFixed(2);
+  document.getElementById('rc-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  document.getElementById('rc-start-btn').disabled = true;
+  document.getElementById('rc-step-btn').disabled = false;
+  document.getElementById('rc-cashout-btn').disabled = true;
+  setMsg('rc-msg', '🛸 Route locked — warp forward or escape!', 'info');
+}
+
+function rcStep() {
+  if (!rcInGame) return;
+  const lanes = parseInt(document.getElementById('rc-lanes').value) || 5;
+  const inc = parseFloat(document.getElementById('rc-mult-inc').value) || 0.25;
+  const hit = rcOutcomes[rcLane];
+  rcLane++;
+
+  const field = document.getElementById('rc-field');
+  const rowH = 320 / (lanes + 1);
+  const player = document.getElementById('rc-player');
+  player.style.bottom = (8 + rcLane * rowH) + 'px';
+
+  if (hit) {
+    const car = document.createElement('div');
+    car.className = 'rc-car'; car.textContent = '🚀';
+    car.style.left = '50%'; car.style.bottom = (8 + (rcLane - 1) * rowH) + 'px';
+    car.style.transform = 'translateX(-50%)';
+    field.appendChild(car);
+    rcEnd(false);
+    return;
+  }
+
+  rcMult = 1 + rcLane * inc * RTP;
+  document.getElementById('rc-mult').textContent = rcMult.toFixed(2) + 'x';
+  document.getElementById('rc-potential').textContent = '🪙 ' + (rcBet * rcMult).toFixed(2);
+  document.getElementById('rc-cashout-btn').disabled = false;
+
+  if (rcLane >= lanes) rcEnd(true, rcBet * rcMult);
+  else setMsg('rc-msg', `✅ Lane ${rcLane} clear — ${rcMult.toFixed(2)}x`, 'info');
+}
+
+function rcCashout() {
+  if (!rcInGame || rcLane === 0) return;
+  rcEnd(true, rcBet * rcMult);
+}
+
+function rcEnd(won, winAmt) {
+  rcInGame = false;
+  document.getElementById('rc-start-btn').disabled = false;
+  document.getElementById('rc-step-btn').disabled = true;
+  document.getElementById('rc-cashout-btn').disabled = true;
+  if (won) {
+    updateWallet(winAmt);
+    rcWins++;
+    if (rcMult > rcBest) { rcBest = rcMult; document.getElementById('rc-best').textContent = rcBest.toFixed(2) + 'x'; }
+    setMsg('rc-msg', `+$${winAmt.toFixed(2)}`, 'win');
+    addHistory('rc-history', `+$${winAmt.toFixed(2)}`, 'h-win');
+  } else {
+    rcLosses++;
+    setMsg('rc-msg', `Hit by car — -$${rcBet.toFixed(2)}`, 'lose');
+    addHistory('rc-history', `-$${rcBet.toFixed(2)}`, 'h-lose');
+  }
+  document.getElementById('rc-wins').textContent = rcWins;
+  document.getElementById('rc-losses').textContent = rcLosses;
+}
+
+// ============================================================
+// DICE — roll 0.00–100.00 predetermined; over/under bets
+// ============================================================
+let diceDir = 'over', diceWins = 0, diceLosses = 0, diceRolling = false;
+
+function diceSetDir(dir) {
+  diceDir = dir;
+  document.getElementById('dice-over-btn').classList.toggle('active', dir === 'over');
+  document.getElementById('dice-under-btn').classList.toggle('active', dir === 'under');
+  diceUpdatePayout();
+}
+
+function diceUpdateTarget() {
+  const t = parseFloat(document.getElementById('dice-target').value);
+  document.getElementById('dice-target-disp').textContent = t.toFixed(2);
+  document.getElementById('dice-target-line').style.left = t + '%';
+  diceUpdatePayout();
+}
+
+function diceWinChance(target, dir) {
+  return dir === 'over' ? (100 - target) / 100 : target / 100;
+}
+
+function diceMultiplier(target, dir) {
+  const chance = diceWinChance(target, dir);
+  if (chance <= 0.01) return 0;
+  return (1 / chance) * RTP;
+}
+
+function diceUpdatePayout() {
+  const target = parseFloat(document.getElementById('dice-target').value);
+  const mult = diceMultiplier(target, diceDir);
+  const pct = (diceWinChance(target, diceDir) * 100).toFixed(1);
+  document.getElementById('dice-payout').textContent = `${pct}% win chance — pays ${mult.toFixed(2)}x`;
+}
+
+async function diceRoll() {
+  if (diceRolling) return;
+  const bet = parseFloat(document.getElementById('dice-bet').value) || 5;
+  const target = parseFloat(document.getElementById('dice-target').value);
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  const mult = diceMultiplier(target, diceDir);
+  if (mult <= 0) { showNotif('Invalid target', 'lose'); return; }
+
+  diceRolling = true;
+  document.getElementById('dice-roll-btn').disabled = true;
+  updateWallet(-bet);
+
+  const round = await beginRound('dice', `${diceDir}:${target}`);
+  const roll = hashFloat100(round.bytes, 0);
+  const win = diceDir === 'over' ? roll > target : roll < target;
+
+  document.getElementById('dice-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  document.getElementById('dice-result').textContent = '···';
+  for (let i = 0; i < 12; i++) {
+    document.getElementById('dice-result').textContent = (Math.random() * 100).toFixed(2);
+    await sleep(40);
+  }
+  document.getElementById('dice-result').textContent = roll.toFixed(2);
+  document.getElementById('dice-fill').style.width = roll + '%';
+  document.getElementById('dice-last').textContent = roll.toFixed(2);
+
+  if (win) {
+    const gain = bet * mult;
+    updateWallet(gain);
+    diceWins++;
+    setMsg('dice-msg', `Win! ${roll.toFixed(2)} — +🪙 ${Math.floor(gain - bet)}`, 'win');
+    addHistory('dice-history', `+🪙 ${Math.floor(gain - bet)} (${roll.toFixed(2)})`, 'h-win'); chatAnnounceWin('Nebula Dice', gain - bet);
+  } else {
+    diceLosses++;
+    setMsg('dice-msg', `Loss — ${roll.toFixed(2)} vs ${target.toFixed(2)}`, 'lose');
+    addHistory('dice-history', `-🪙 ${Math.floor(bet)} (${roll.toFixed(2)})`, 'h-lose');
+  }
+  document.getElementById('dice-wins').textContent = diceWins;
+  document.getElementById('dice-losses').textContent = diceLosses;
+  diceRolling = false;
+  document.getElementById('dice-roll-btn').disabled = false;
+}
+
+// ============================================================
+// PLINKO — path from hash bits; bucket multipliers with RTP
+// ============================================================
+let plinkoWins = 0, plinkoBest = 0, plinkoNet = 0, plinkoDropping = false;
+
+const PLINKO_MULTS = {
+  low: {
+    8: [5.6, 2.1, 1.1, 1, 0.5, 1, 1.1, 2.1, 5.6],
+    12: [10, 3, 1.6, 1.4, 1.1, 1, 0.5, 1, 1.1, 1.4, 1.6, 3, 10],
+    16: [16, 9, 2, 1.4, 1.4, 1.2, 1.1, 1, 0.5, 1, 1.1, 1.2, 1.4, 1.4, 2, 9, 16]
+  },
+  medium: {
+    8: [13, 3, 1.3, 0.7, 0.4, 0.7, 1.3, 3, 13],
+    12: [33, 11, 4, 2, 1.1, 0.6, 0.3, 0.6, 1.1, 2, 4, 11, 33],
+    16: [110, 41, 10, 5, 3, 1.5, 1, 0.5, 0.3, 0.5, 1, 1.5, 3, 5, 10, 41, 110]
+  },
+  high: {
+    8: [29, 4, 1.5, 0.3, 0.2, 0.3, 1.5, 4, 29],
+    12: [88, 18, 5, 2, 0.5, 0.2, 0.1, 0.2, 0.5, 2, 5, 18, 88],
+    16: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000]
+  }
+};
+
+function plinkoSnapRows(r) {
+  if (r <= 10) return 8;
+  if (r <= 14) return 12;
+  return 16;
+}
+
+function plinkoGetMults() {
+  const rows = parseInt(document.getElementById('plinko-rows').value) || 12;
+  const risk = document.getElementById('plinko-risk').value;
+  const snap = plinkoSnapRows(rows);
+  const table = PLINKO_MULTS[risk][snap] || PLINKO_MULTS.medium[12];
+  const slots = rows + 1;
+  const snapSlots = snap + 1;
+  return Array.from({ length: slots }, (_, i) => {
+    const src = Math.round(i * (snapSlots - 1) / (slots - 1));
+    return table[src] * RTP;
+  });
+}
+
+function plinkoBuildBoard() {
+  const board = document.getElementById('plinko-board');
+  const rows = parseInt(document.getElementById('plinko-rows').value) || 12;
+  const mults = plinkoGetMults();
+  board.innerHTML = '';
+  const w = board.clientWidth || 400;
+  const h = 300;
+  board.style.height = h + 'px';
+
+  for (let r = 0; r < rows; r++) {
+    const pegsInRow = r + 3;
+    for (let c = 0; c < pegsInRow; c++) {
+      const peg = document.createElement('div');
+      peg.className = 'plinko-peg';
+      peg.style.left = ((c + 1) / (pegsInRow + 1)) * 100 + '%';
+      peg.style.top = ((r + 1) / (rows + 2)) * 100 + '%';
+      board.appendChild(peg);
+    }
+  }
+
+  const ball = document.createElement('div');
+  ball.className = 'plinko-ball';
+  ball.id = 'plinko-ball';
+  ball.style.left = '50%';
+  ball.style.top = '4%';
+  board.appendChild(ball);
+
+  const slots = document.getElementById('plinko-slots');
+  slots.innerHTML = mults.map(m => `<div class="plinko-slot">${m.toFixed(1)}x</div>`).join('');
+}
+
+async function plinkoDrop() {
+  if (plinkoDropping) return;
+  const bet = parseFloat(document.getElementById('plinko-bet').value) || 5;
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  const rows = parseInt(document.getElementById('plinko-rows').value) || 12;
+  const mults = plinkoGetMults();
+
+  plinkoDropping = true;
+  document.getElementById('plinko-drop-btn').disabled = true;
+  updateWallet(-bet);
+
+  const round = await beginRound('plinko', `rows=${rows}&risk=${document.getElementById('plinko-risk').value}`);
+  const path = [];
+  let slot = 0;
+  for (let r = 0; r < rows; r++) {
+    const right = hashFloat(round.bytes, r * 4) >= 0.5 ? 1 : 0;
+    path.push(right);
+    slot += right;
+  }
+  const mult = mults[slot];
+
+  document.getElementById('plinko-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  const ball = document.getElementById('plinko-ball');
+  ball.style.left = '50%';
+  ball.style.top = '4%';
+  let pos = 0.5;
+  for (let r = 0; r < rows; r++) {
+    const pegsInRow = r + 3;
+    const step = path[r] ? 1 / (rows + 2) : -1 / (rows + 2);
+    pos += step * 0.5;
+    pos = Math.max(0.08, Math.min(0.92, pos));
+    ball.style.left = (pos * 100) + '%';
+    ball.style.top = (((r + 1) / (rows + 2)) * 100) + '%';
+    await sleep(120);
+  }
+  ball.style.top = '96%';
+
+  document.querySelectorAll('.plinko-slot').forEach((s, i) => s.classList.toggle('landed', i === slot));
+  const win = bet * mult;
+  updateWallet(win);
+  plinkoWins++;
+  plinkoNet += win - bet;
+  if (mult > plinkoBest) { plinkoBest = mult; document.getElementById('plinko-best').textContent = plinkoBest.toFixed(1) + 'x'; }
+  document.getElementById('plinko-wins').textContent = plinkoWins;
+  document.getElementById('plinko-net').textContent = (plinkoNet >= 0 ? '+' : '') + '🪙 ' + Math.floor(plinkoNet);
+  setMsg('plinko-msg', `${mult.toFixed(2)}x — ${win >= bet ? '+' : ''}🪙 ${Math.floor(win - bet)}`, win >= bet ? 'win' : 'lose');
+  addHistory('plinko-history', `${mult.toFixed(1)}x 🪙 ${Math.floor(win)}`, win >= bet ? 'h-win' : 'h-lose');
+  plinkoDropping = false;
+  document.getElementById('plinko-drop-btn').disabled = false;
+}
+
+// ============================================================
+// CRASH — crash point predetermined; animation cosmetic
+// ============================================================
+let crashInGame = false, crashInterval = null, crashBet = 0, crashPoint = 1;
+let crashMult = 1, crashWins = 0, crashLosses = 0, crashRecent = [];
+let crashCashedOut = false;
+
+function crashComputePoint(bytes) {
+  const r = hashFloat(bytes, 0);
+  if (r < HOUSE_EDGE) return 1.00;
+  const point = Math.floor((RTP / (1 - r)) * 100) / 100;
+  return Math.min(Math.max(point, 1), 1000);
+}
+
+function crashResizeCanvas() {
+  const canvas = document.getElementById('crash-canvas');
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth - 32;
+  canvas.height = wrap.clientHeight - 32;
+}
+
+function crashDrawCurve(mult, crashed) {
+  const canvas = document.getElementById('crash-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.strokeStyle = crashed ? '#ff1744' : '#00e676';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  const steps = 60;
+  const progress = Math.min((mult - 1) / Math.max(crashPoint - 1, 0.01), 1);
+  for (let i = 0; i <= steps * progress; i++) {
+    const t = i / steps;
+    const m = 1 + (crashPoint - 1) * Math.pow(t, 1.6);
+    const x = t * w * 0.95;
+    const y = h - (Math.log(m) / Math.log(Math.max(crashPoint, 1.01))) * h * 0.85;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function crashResetUI() {
+  crashInGame = false;
+  crashCashedOut = false;
+  document.getElementById('crash-start-btn').disabled = false;
+  document.getElementById('crash-cashout-btn').disabled = true;
+  const disp = document.getElementById('crash-mult-display');
+  disp.textContent = '1.00x';
+  disp.classList.remove('crashed');
+}
+
+function crashAddRecent(point) {
+  crashRecent.unshift(point);
+  if (crashRecent.length > 12) crashRecent.pop();
+  document.getElementById('crash-recent').innerHTML = crashRecent.map(p => {
+    const cls = p < 2 ? 'low' : p < 5 ? 'mid' : 'high';
+    return `<span class="crash-chip ${cls}">${p.toFixed(2)}x</span>`;
+  }).join('');
+}
+
+async function crashStart() {
+  if (crashInGame) return;
+  crashBet = parseFloat(document.getElementById('crash-bet').value) || 5;
+  if (crashBet <= 0 || crashBet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  updateWallet(-crashBet);
+  crashResizeCanvas();
+
+  const round = await beginRound('crash', '');
+  crashPoint = crashComputePoint(round.bytes);
+  document.getElementById('crash-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  crashInGame = true;
+  crashCashedOut = false;
+  crashMult = 1;
+  document.getElementById('crash-start-btn').disabled = true;
+  document.getElementById('crash-cashout-btn').disabled = false;
+  setMsg('crash-msg', 'Flying… cash out before crash!', 'info');
+
+  const auto = parseFloat(document.getElementById('crash-auto').value) || 2;
+  const start = Date.now();
+
+  if (crashInterval) clearInterval(crashInterval);
+  crashInterval = setInterval(() => {
+    const elapsed = (Date.now() - start) / 1000;
+    crashMult = Math.pow(Math.E, elapsed * 0.35);
+    crashMult = Math.floor(crashMult * 100) / 100;
+
+    const disp = document.getElementById('crash-mult-display');
+    disp.textContent = crashMult.toFixed(2) + 'x';
+    crashDrawCurve(crashMult, false);
+
+    if (!crashCashedOut && crashMult >= auto) crashCashout(true);
+
+    if (crashMult >= crashPoint) {
+      clearInterval(crashInterval);
+      crashInterval = null;
+      if (!crashCashedOut) {
+        crashLosses++;
+        disp.classList.add('crashed');
+        disp.textContent = 'CRASH ' + crashPoint.toFixed(2) + 'x';
+        setMsg('crash-msg', `Crashed at ${crashPoint.toFixed(2)}x — -$${crashBet.toFixed(2)}`, 'lose');
+        addHistory('crash-history', `-$${crashBet.toFixed(2)} @${crashPoint.toFixed(2)}x`, 'h-lose');
+        document.getElementById('crash-losses').textContent = crashLosses;
+      }
+      document.getElementById('crash-last-crash').textContent = crashPoint.toFixed(2) + 'x';
+      crashAddRecent(crashPoint);
+      crashDrawCurve(crashPoint, true);
+      crashInGame = false;
+      document.getElementById('crash-start-btn').disabled = false;
+      document.getElementById('crash-cashout-btn').disabled = true;
+    }
+  }, 50);
+}
+
+function crashCashout(auto) {
+  if (!crashInGame || crashCashedOut) return;
+  crashCashedOut = true;
+  const win = crashBet * crashMult;
+  updateWallet(win);
+  crashWins++;
+  document.getElementById('crash-wins').textContent = crashWins;
+  document.getElementById('crash-cashout-btn').disabled = true;
+  setMsg('crash-msg', `${auto ? 'Auto ' : ''}Cashout @ ${crashMult.toFixed(2)}x — +🪙 ${Math.floor(win - crashBet)}`, 'win');
+  addHistory('crash-history', `+🪙 ${Math.floor(win - crashBet)} @${crashMult.toFixed(2)}x`, 'h-win'); chatAnnounceWin('Orbit Crash', win - crashBet);
+}
+
+// ============================================================
+// KENO — 80 numbers, draw 20 from seed
+// ============================================================
+let kenoPicks = new Set(), kenoWins = 0, kenoLosses = 0, kenoPlaying = false;
+
+const KENO_PAY = {
+  1: { 1: 3 }, 2: { 2: 15, 1: 1 }, 3: { 3: 50, 2: 3, 1: 1 },
+  4: { 4: 100, 3: 10, 2: 2 }, 5: { 5: 200, 4: 20, 3: 3, 2: 1 },
+  6: { 6: 500, 5: 50, 4: 8, 3: 2 }, 7: { 7: 1000, 6: 100, 5: 15, 4: 3, 3: 1 },
+  8: { 8: 2000, 7: 200, 6: 25, 5: 5, 4: 2 }, 9: { 9: 5000, 8: 500, 7: 50, 6: 10, 5: 2 },
+  10: { 10: 10000, 9: 1000, 8: 100, 7: 20, 6: 5, 5: 2 }
+};
+
+function kenoBuildBoard() {
+  const board = document.getElementById('keno-board');
+  board.innerHTML = '';
+  for (let n = 1; n <= 80; n++) {
+    const el = document.createElement('div');
+    el.className = 'keno-num';
+    el.textContent = n;
+    el.id = 'kn' + n;
+    el.onclick = () => kenoToggle(n);
+    board.appendChild(el);
+  }
+}
+
+function kenoToggle(n) {
+  if (kenoPlaying) return;
+  if (kenoPicks.has(n)) kenoPicks.delete(n);
+  else if (kenoPicks.size >= 10) { showNotif('Max 10 picks', 'lose'); return; }
+  else kenoPicks.add(n);
+  document.querySelectorAll('.keno-num').forEach(el => {
+    const num = parseInt(el.textContent);
+    el.classList.toggle('picked', kenoPicks.has(num));
+    el.classList.remove('drawn', 'hit');
+  });
+  document.getElementById('keno-picked').textContent = kenoPicks.size;
+  document.getElementById('keno-info').textContent = `${kenoPicks.size} number(s) selected`;
+}
+
+function kenoClear() {
+  if (kenoPlaying) return;
+  kenoPicks.clear();
+  document.querySelectorAll('.keno-num').forEach(el => el.className = 'keno-num');
+  document.getElementById('keno-picked').textContent = '0';
+  document.getElementById('keno-info').textContent = '🔭 Select your star coordinates then scan the galaxy.';
+}
+
+async function kenoPlay() {
+  if (kenoPlaying || kenoPicks.size === 0) { showNotif('Pick 1–10 numbers', 'lose'); return; }
+  const bet = parseFloat(document.getElementById('keno-bet').value) || 5;
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  updateWallet(-bet);
+  kenoPlaying = true;
+  document.getElementById('keno-play-btn').disabled = true;
+
+  const round = await beginRound('keno', `picks=${kenoPicks.size}`);
+  const nums = shuffleFromBytes(Array.from({ length: 80 }, (_, i) => i + 1), round.bytes);
+  const drawn = nums.slice(0, 20);
+
+  document.getElementById('keno-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  document.querySelectorAll('.keno-num').forEach(el => el.classList.remove('drawn', 'hit'));
+  for (let i = 0; i < drawn.length; i++) {
+    const n = drawn[i];
+    const el = document.getElementById('kn' + n);
+    await sleep(80);
+    el.classList.add('drawn');
+    if (kenoPicks.has(n)) el.classList.add('hit');
+  }
+
+  let hits = 0;
+  kenoPicks.forEach(p => { if (drawn.includes(p)) hits++; });
+  const payTable = KENO_PAY[kenoPicks.size] || {};
+  const mult = (payTable[hits] || 0) * RTP;
+  const win = bet * mult;
+
+  if (mult > 0) {
+    updateWallet(win);
+    kenoWins++;
+    setMsg('keno-msg', `${hits} hits — ${mult.toFixed(1)}x +🪙 ${Math.floor(win - bet)}`, 'win');
+    addHistory('keno-history', `+🪙 ${Math.floor(win - bet)} (${hits} hits)`, 'h-win'); chatAnnounceWin('Star Chart', win - bet);
+  } else {
+    kenoLosses++;
+    setMsg('keno-msg', `${hits} hits — no payout`, 'lose');
+    addHistory('keno-history', `-🪙 ${Math.floor(bet)} (${hits} hits)`, 'h-lose');
+  }
+  document.getElementById('keno-wins').textContent = kenoWins;
+  document.getElementById('keno-losses').textContent = kenoLosses;
+  kenoPlaying = false;
+  document.getElementById('keno-play-btn').disabled = false;
+}
+
+// ============================================================
+// ROULETTE — European 0–36, result from seed
+// ============================================================
+const ROULETTE_RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const ROULETTE_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+let rouletteBetType = 'red', rouletteBetNum = null, rouletteWins = 0, rouletteLosses = 0, rouletteSpinning = false;
+
+function rouletteBuildGrid() {
+  const grid = document.getElementById('roulette-num-grid');
+  grid.innerHTML = '';
+  for (let n = 0; n <= 36; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'roulette-num-btn ' + (n === 0 ? 'green' : ROULETTE_RED.has(n) ? 'red' : 'black');
+    btn.textContent = n;
+    btn.onclick = () => {
+      rouletteBetType = 'number';
+      rouletteBetNum = n;
+      document.querySelectorAll('.roulette-bets .btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.roulette-num-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    grid.appendChild(btn);
+  }
+}
+
+function rouletteSetBet(type, el) {
+  rouletteBetType = type;
+  rouletteBetNum = null;
+  document.querySelectorAll('.roulette-bets .btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.roulette-num-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function rouletteCheckWin(n, type, betNum) {
+  if (type === 'number') return n === betNum;
+  if (type === 'red') return ROULETTE_RED.has(n);
+  if (type === 'black') return n !== 0 && !ROULETTE_RED.has(n);
+  if (type === 'odd') return n !== 0 && n % 2 === 1;
+  if (type === 'even') return n !== 0 && n % 2 === 0;
+  if (type === 'low') return n >= 1 && n <= 18;
+  if (type === 'high') return n >= 19 && n <= 36;
+  return false;
+}
+
+function roulettePayout(type) {
+  if (type === 'number') return 35; // straight number: 35:1 profit (standard roulette)
+  return 1; // even-money bets: win exactly your bet (1:1 profit)
+}
+
+async function rouletteSpin() {
+  if (rouletteSpinning) return;
+  const bet = parseFloat(document.getElementById('roulette-bet').value) || 5;
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  updateWallet(-bet);
+  rouletteSpinning = true;
+  document.getElementById('roulette-spin-btn').disabled = true;
+
+  const round = await beginRound('roulette', rouletteBetType + (rouletteBetNum !== null ? ':' + rouletteBetNum : ''));
+  const idx = uint32(round.bytes, 0) % 37;
+  const result = ROULETTE_ORDER[idx % ROULETTE_ORDER.length];
+
+  document.getElementById('roulette-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  const wheel = document.getElementById('roulette-wheel');
+  const spins = 4 + (uint32(round.bytes, 4) % 3);
+  const slice = 360 / 37;
+  const targetAngle = spins * 360 + idx * slice;
+  wheel.style.transform = `rotate(${targetAngle}deg)`;
+
+  document.getElementById('roulette-result').textContent = '…';
+  await sleep(3200);
+  document.getElementById('roulette-result').textContent = result;
+  document.getElementById('roulette-last').textContent = result;
+
+  const win = rouletteCheckWin(result, rouletteBetType, rouletteBetNum);
+  if (win) {
+    const mult = roulettePayout(rouletteBetType);
+    const profit = Math.floor(bet * mult);
+    updateWallet(bet + profit); // return stake + profit
+    rouletteWins++;
+    const label = mult >= 35 ? `🎯 ${result} — +🪙 ${profit} (${mult}:1!)` : `🌀 ${result} — +🪙 ${profit}`;
+    setMsg('roulette-msg', label, 'win');
+    addHistory('roulette-history', `+🪙 ${profit} (${result})`, 'h-win'); chatAnnounceWin('Orbit Spin', profit);
+  } else {
+    rouletteLosses++;
+    setMsg('roulette-msg', `${result} — loss`, 'lose');
+    addHistory('roulette-history', `-🪙 ${Math.floor(bet)} (${result})`, 'h-lose');
+  }
+  document.getElementById('roulette-wins').textContent = rouletteWins;
+  document.getElementById('roulette-losses').textContent = rouletteLosses;
+  rouletteSpinning = false;
+  document.getElementById('roulette-spin-btn').disabled = false;
+}
+
+// ============================================================
+// ROCK PAPER SCISSORS — house move from seed
+// ============================================================
+const RPS_EMOJI = { rock: '🛰️', paper: '🛡️', scissors: '⚡' };
+const RPS_BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+let rpsPick = null, rpsWins = 0, rpsLosses = 0, rpsTies = 0, rpsPlaying = false;
+
+function rpsSelect(choice) {
+  if (rpsPlaying) return;
+  rpsPick = choice;
+  document.querySelectorAll('.rps-choice').forEach(el => {
+    el.classList.toggle('selected', el.dataset.move === choice);
+  });
+  document.getElementById('rps-play-btn').disabled = false;
+}
+
+async function rpsPlay() {
+  if (rpsPlaying || !rpsPick) return;
+  const bet = parseFloat(document.getElementById('rps-bet').value) || 5;
+  if (bet <= 0 || bet > wallet) { showNotif('Insufficient funds', 'lose'); return; }
+  updateWallet(-bet);
+  rpsPlaying = true;
+  document.getElementById('rps-play-btn').disabled = true;
+
+  const round = await beginRound('rps', rpsPick);
+  const moves = ['rock', 'paper', 'scissors'];
+  // Base house move from seed byte 0
+  let house = moves[uint32(round.bytes, 0) % 3];
+  // House wins 51%: use byte 4 to occasionally override house move to the winning counter
+  const biasRoll = uint32(round.bytes, 4) / 0x100000000;
+  if (biasRoll < 0.02) {
+    // Force house to win: pick the move that beats the player
+    const counter = { rock: 'paper', paper: 'scissors', scissors: 'rock' };
+    house = counter[rpsPick];
+  }
+
+  document.getElementById('rps-fair').innerHTML = fairPanelHtml(pf.lastRound);
+  revealServerSeed();
+
+  document.getElementById('rps-player').textContent = RPS_EMOJI[rpsPick];
+  document.getElementById('rps-house').textContent = '?';
+  await sleep(400);
+  document.getElementById('rps-house').textContent = RPS_EMOJI[house];
+
+  if (rpsPick === house) {
+    updateWallet(bet);
+    rpsTies++;
+    setMsg('rps-msg', 'Tie — bet returned', 'info');
+    addHistory('rps-history', 'Push', 'h-win');
+  } else if (RPS_BEATS[rpsPick] === house) {
+    updateWallet(bet * 2); // return stake + equal profit (1:1)
+    rpsWins++;
+    setMsg('rps-msg', `🛰️ Victory! +🪙 ${Math.floor(bet)}`, 'win');
+    addHistory('rps-history', `+🪙 ${Math.floor(bet)}`, 'h-win');
+  } else {
+    rpsLosses++;
+    setMsg('rps-msg', `House wins — -🪙 ${Math.floor(bet)}`, 'lose');
+    addHistory('rps-history', `-🪙 ${Math.floor(bet)}`, 'h-lose');
+  }
+  document.getElementById('rps-wins').textContent = rpsWins;
+  document.getElementById('rps-losses').textContent = rpsLosses;
+  document.getElementById('rps-ties').textContent = rpsTies;
+  rpsPlaying = false;
+  rpsPick = null;
+  document.querySelectorAll('.rps-choice').forEach(el => el.classList.remove('selected'));
+}
+
+initProvablyFair();
+diceUpdateTarget();
+kenoBuildBoard();
+rouletteBuildGrid();
+document.querySelector('.roulette-bets .btn[data-bet="red"]')?.classList.add('active');
+
+// ============================================================
+// LIVE CHAT SYSTEM
+// ============================================================
+const CHAT_BOTS = [
+  { name: 'NebulaBet',  cls: 'bot1' },
+  { name: 'StarRaider', cls: 'bot2' },
+  { name: 'CosmicAce',  cls: 'bot3' },
+  { name: 'VoidWalker', cls: 'bot4' },
+  { name: 'OrbitKing',  cls: 'bot1' },
+  { name: 'PulsarPro',  cls: 'bot2' },
+];
+
+const CHAT_BOT_MSGS = [
+  "let's gooo 🚀",
+  "just hit 4x on crash, insane run",
+  "anyone else riding the asteroid field?",
+  "gg on that hand 🃏",
+  "tried Warp Gauntlet yet? wild",
+  "blackjack is rigged lmaooo jk",
+  "big W on roulette, finally 🌀",
+  "who's grinding keno tonight?",
+  "this orbit spin is cracked",
+  "my strategy: bet big, pray to the stars",
+  "3 in a row losses bruh 💀",
+  "easy money on star battle",
+  "hodl your coins or yolo it all?",
+  "plinko drop was satisfying af",
+  "crashed at 1.04x again smh",
+  "finally cracked the dice code 🎲",
+  "warp gauntlet: lane 6 cleared 🛸",
+  "top leaderboard by end of night",
+  "just doubled up on blackjack 🌌",
+  "free coins when? 😂",
+];
+
+let chatCollapsed = false;
+let chatOnlineCount = 24;
+
+function chatToggle() {
+  chatCollapsed = !chatCollapsed;
+  const sb = document.getElementById('chat-sidebar');
+  const wrap = document.querySelector('.site-wrap');
+  const nav = document.getElementById('bottom-nav');
+  const btn = sb.querySelector('.chat-toggle-btn');
+  sb.classList.toggle('collapsed', chatCollapsed);
+  if (wrap) wrap.classList.toggle('chat-collapsed', chatCollapsed);
+  if (nav) nav.style.left = chatCollapsed ? '48px' : '260px';
+  btn.textContent = chatCollapsed ? '▶' : '◀';
+  btn.title = chatCollapsed ? 'Expand chat' : 'Collapse chat';
+}
+
+function chatTimestamp() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function chatAddMsg({ user, text, userCls = 'default', type = '' }) {
+  const body = document.getElementById('chat-body');
+  if (!body) return;
+  const msg = document.createElement('div');
+  msg.className = 'chat-msg' + (type ? ' is-' + type : '');
+  msg.innerHTML = `
+    <div class="chat-msg-header">
+      <span class="chat-msg-user ${userCls}">${user}</span>
+      <span class="chat-msg-time">${chatTimestamp()}</span>
+    </div>
+    <div class="chat-msg-text">${text}</div>
+  `;
+  body.appendChild(msg);
+  // Keep scroll at bottom
+  body.scrollTop = body.scrollHeight;
+  // Trim to 80 messages
+  while (body.children.length > 80) body.removeChild(body.firstChild);
+}
+
+function chatSend() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  chatAddMsg({ user: 'You', text, userCls: 'is-you' });
+  input.value = '';
+}
+
+// Announce wins/losses to chat automatically
+function chatAnnounceWin(game, amount) {
+  chatAddMsg({
+    user: '🏆 System',
+    text: `You just won 🪙 ${Math.floor(amount)} on ${game}!`,
+    userCls: 'bot3',
+    type: 'win'
+  });
+}
+function chatAnnounceLoss(game, amount) {
+  if (Math.random() > 0.3) return;
+  chatAddMsg({
+    user: '💀 System',
+    text: `Ouch! Lost 🪙 ${Math.floor(amount)} on ${game}`,
+    userCls: 'bot4',
+    type: 'lose'
+  });
+}
+
+// Simulate bot messages on random intervals
+function chatStartBots() {
+  function sendBot() {
+    const bot = CHAT_BOTS[Math.floor(Math.random() * CHAT_BOTS.length)];
+    const text = CHAT_BOT_MSGS[Math.floor(Math.random() * CHAT_BOT_MSGS.length)];
+    chatAddMsg({ user: bot.name, text, userCls: bot.cls });
+    // Fluctuate online count
+    chatOnlineCount = Math.max(18, Math.min(41, chatOnlineCount + (Math.random() > 0.5 ? 1 : -1)));
+    const onlineEl = document.getElementById('chat-online-count');
+    if (onlineEl) onlineEl.innerHTML = '<span></span>' + chatOnlineCount + ' online';
+    // Schedule next bot message (8-22 seconds)
+    setTimeout(sendBot, 8000 + Math.random() * 14000);
+  }
+  // First bot message after 3s
+  setTimeout(sendBot, 3000);
+}
+
+// Seed initial system messages
+document.addEventListener('DOMContentLoaded', () => {
+  chatAddMsg({ user: '🛸 System', text: 'Welcome to Spacemob Live Chat!', userCls: 'bot3', type: 'system' });
+  chatAddMsg({ user: '🛸 System', text: 'Play games to show your wins here.', userCls: 'bot3', type: 'system' });
+  chatStartBots();
+});
+
+
+// ============================================================
+// SPACE COINS — persist wallet, daily bonus, missions
+// ============================================================
+(function initCoins() {
+  const saved = localStorage.getItem('sc_wallet');
+  if (saved !== null) {
+    wallet = parseFloat(saved);
+  }
+  updateWallet(0); // refresh display
+
+  // Daily bonus: 500 coins every 24h
+  const lastBonus = parseInt(localStorage.getItem('sc_lastBonus') || '0', 10);
+  const now = Date.now();
+  if (now - lastBonus > 86400000) {
+    setTimeout(() => {
+      const bonus = 500;
+      updateWallet(bonus);
+      localStorage.setItem('sc_lastBonus', String(now));
+      showDailyBonusModal(bonus);
+    }, 800);
+  }
+
+  // Auto-refill: if wallet < 50, give 200 coins (so play never gets stuck)
+  setTimeout(() => {
+    if (wallet < 50) {
+      updateWallet(200);
+      showNotif('Low on coins! 🪙 200 refill added', 'win');
+    }
+  }, 1200);
+})();
+
+// Override updateWallet to also persist
+const _origUpdateWallet = updateWallet;
+function updateWallet(d) {
+  wallet = Math.max(0, wallet + d);
+  document.getElementById('wallet-display').textContent = '🪙 ' + Math.floor(wallet).toLocaleString();
+  localStorage.setItem('sc_wallet', String(wallet));
+}
+
+// Daily bonus modal
+function showDailyBonusModal(amount) {
+  const overlay = document.createElement('div');
+  overlay.id = 'daily-bonus-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:3000;display:flex;align-items:center;justify-content:center;padding:1.5rem';
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:2rem;max-width:340px;width:100%;text-align:center">
+      <div style="font-size:3.5rem;margin-bottom:0.75rem">🚀</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:800;color:var(--accent2);margin-bottom:0.5rem;letter-spacing:1px">DAILY MISSION</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:700;color:var(--gold);margin-bottom:0.5rem">🪙 ${amount.toLocaleString()}</div>
+      <div style="color:var(--muted);font-size:0.85rem;margin-bottom:1.25rem">Your daily Space Coins have landed!<br>Come back tomorrow for more.</div>
+      <button onclick="document.getElementById('daily-bonus-overlay').remove()" style="background:linear-gradient(135deg,var(--accent),#6366f1);color:#fff;border:none;border-radius:10px;padding:0.75rem 2rem;font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;letter-spacing:1px;cursor:pointer;width:100%">COLLECT & PLAY</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ============================================================
+// BOTTOM NAV — mobile navigation
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.createElement('nav');
+  nav.id = 'bottom-nav';
+  nav.innerHTML = `
+    <button class="bnav-btn active" id="bnav-home" onclick="goLobby();bnavSet('home')">
+      <span>🚀</span><span>Lobby</span>
+    </button>
+    <button class="bnav-btn" id="bnav-table" onclick="openGame('blackjack');bnavSet('table')">
+      <span>🃏</span><span>Tables</span>
+    </button>
+    <button class="bnav-btn" id="bnav-instant" onclick="openGame('crash');bnavSet('instant')">
+      <span>📈</span><span>Instant</span>
+    </button>
+    <button class="bnav-btn" id="bnav-pick" onclick="openGame('keno');bnavSet('pick')">
+      <span>🎱</span><span>Pick</span>
+    </button>
+    <button class="bnav-btn" id="bnav-fair" onclick="openFairModal();bnavSet('fair')">
+      <span>✓</span><span>Verify</span>
+    </button>`;
+  document.body.appendChild(nav);
+  // Push nav right so it doesn't overlap chat sidebar
+  nav.style.left = '260px';
+});
+
+function bnavSet(id) {
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('bnav-' + id);
+  if (el) el.classList.add('active');
+}
+
+// Override goLobby to also update nav
+const _origGoLobby = goLobby;
+function goLobby() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-lobby').classList.add('active');
+  if (typeof crashInterval !== 'undefined' && crashInterval) { clearInterval(crashInterval); crashInterval = null; }
+  if (typeof crashInGame !== 'undefined' && crashInGame) crashResetUI();
+  bnavSet('home');
+}
+
+// Register Service Worker for PWA offline support
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+
+</html>
